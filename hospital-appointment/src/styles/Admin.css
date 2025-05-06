@@ -1,0 +1,1022 @@
+.admin-page {
+    min-height: 100vh;
+    min-width: 100vw;
+    background-color: #f5f5f5;
+    overflow: hidden;
+}
+
+/* Admin Container */
+.admin-container {
+    display: flex;
+    gap: 24px;
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+    height: calc(100vh - 120px);
+}
+
+/* Sidebar */
+.admin-sidebar {
+    width: 280px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    height: fit-content;
+    position: sticky;
+    top: 24px;
+}
+
+.sidebar-header {
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 20px;
+}
+
+.sidebar-header h2 {
+    font-size: 1.5rem;
+    color: #333;
+    margin: 0;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-menu li {
+    margin-bottom: 8px;
+}
+
+.sidebar-menu button {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1rem;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sidebar-menu button:hover {
+    background-color: #f0f7ff;
+    color: #2563eb;
+}
+
+.sidebar-menu button.active {
+    background-color: #2563eb;
+    color: white;
+}
+
+.sidebar-menu .icon {
+    font-size: 1.2rem;
+}
+
+/* Main Content */
+.admin-main {
+    flex: 1;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    height: 80%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+    padding-top: 10px;
+}
+
+.admin-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.admin-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.admin-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.content-header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 24px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+}
+
+.add-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.add-button:hover {
+    background-color: #45a049;
+}
+
+.add-button .icon {
+    font-size: 18px;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .admin-container {
+        flex-direction: column;
+    }
+
+    .admin-sidebar {
+        width: 100%;
+    }
+
+    .sidebar-menu {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .sidebar-menu li {
+        margin: 0;
+        flex: 1;
+        min-width: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 16px;
+    }
+
+    .admin-main {
+        padding: 16px;
+    }
+
+    .sidebar-menu li {
+        min-width: 150px;
+    }
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    padding: 24px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 20px;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.close-button:hover {
+    color: #333;
+}
+
+.modal-content .form-group {
+    margin-bottom: 24px;
+}
+
+.modal-content label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.modal-content input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #333;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.modal-content input[type="text"]:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.1);
+}
+
+.modal-content input[type="text"]::placeholder {
+    color: #999;
+}
+
+.modal-content input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #eee;
+}
+
+.cancel-button {
+    padding: 10px 20px;
+    background-color: #f5f5f5;
+    color: #333;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.cancel-button:hover {
+    background-color: #e0e0e0;
+}
+
+.submit-button {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.submit-button:hover {
+    background-color: #45a049;
+}
+
+/* Hospital Grid */
+.hospital-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+    padding: 15px;
+}
+
+.hospital-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s;
+    border: 1px solid #eee;
+}
+
+.hospital-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+}
+
+.hospital-image {
+    width: 100%;
+    height: 140px;
+    overflow: hidden;
+}
+
+.hospital-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hospital-info {
+    padding: 10px;
+}
+
+.hospital-info h3 {
+    margin: 0 0 6px 0;
+    color: #333;
+    font-size: 1em;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hospital-address,
+.hospital-phone {
+    margin: 3px 0;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hospital-address .icon,
+.hospital-phone .icon {
+    font-size: 1em;
+    flex-shrink: 0;
+}
+
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-size: 1.1em;
+}
+
+/* Hospital Detail Modal */
+.hospital-detail-modal {
+    max-width: 1200px;
+    width: 90%;
+    height: 90vh;
+}
+
+.hospital-detail-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 85%;
+    background: #f8f9fa;
+}
+
+.hospital-detail-main {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.hospital-detail-header {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    height: 160px;
+}
+
+.hospital-detail-header img {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hospital-detail-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.hospital-detail-info h2 {
+    margin: 0 0 12px 0;
+    color: #1a237e;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.hospital-detail-info p {
+    margin: 6px 0;
+    color: #455a64;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.search-box {
+    position: relative;
+    width: 240px;
+    right: 60px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 8px 12px;
+    padding-right: 35px;
+    border: 1px solid #e8eaf6;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #455a64;
+    background: white;
+    transition: all 0.3s ease;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: #1a237e;
+    box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
+}
+
+.search-box .search-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #1a237e;
+    font-size: 16px;
+    pointer-events: none;
+}
+
+.departments-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    height: fit-content;
+}
+
+.departments-section h3,
+.doctors-section h3 {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 20px;
+}
+
+.departments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.departments-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.departments-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.departments-list::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.departments-list::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.department-item {
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.department-item h4 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 16px;
+}
+
+.department-item p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.doctors-section {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.doctors-section h3 {
+    color: #1a237e;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+}
+
+.doctors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.doctors-grid::-webkit-scrollbar {
+    width: 4px;
+}
+
+.doctors-grid::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.doctors-grid::-webkit-scrollbar-thumb {
+    background: #c5cae9;
+    border-radius: 4px;
+}
+
+.doctors-grid::-webkit-scrollbar-thumb:hover {
+    background: #9fa8da;
+}
+
+.doctor-card {
+    background: white;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.doctor-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+.doctor-info {
+    padding: 12px;
+}
+
+.doctor-info h4 {
+    margin: 0 0 5px 0;
+    color: #333;
+    font-size: 16px;
+}
+
+.doctor-info p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Make hospital card clickable */
+.hospital-card {
+    cursor: pointer;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header .add-button {
+    padding: 8px 12px;
+    font-size: 0.9em;
+}
+
+.section-header .add-button .icon {
+    font-size: 1em;
+}
+
+/* Form styles */
+.modal-content textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 100px;
+}
+
+.specializations-section {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    height: 160px;
+}
+
+.specializations-section h3 {
+    color: #1a237e;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+}
+
+.specializations-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px;
+    max-height: calc(160px - 60px);
+}
+
+.specializations-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.specializations-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.specializations-list::-webkit-scrollbar-thumb {
+    background: #c5cae9;
+    border-radius: 4px;
+}
+
+.specializations-list::-webkit-scrollbar-thumb:hover {
+    background: #9fa8da;
+}
+
+.specialization-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.specialization-table thead {
+    background-color: #f5f7fa;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.specialization-table th {
+    padding: 8px 14px;
+    text-align: left;
+    font-weight: 600;
+    color: #1a237e;
+    border-bottom: 2px solid #e8eaf6;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.specialization-table td {
+    padding: 8px 14px;
+    border-bottom: 1px solid #e8eaf6;
+    color: #455a64;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.specialization-table tbody tr:hover {
+    background-color: #f5f7fa;
+}
+
+.specialization-table td:first-child {
+    width: 50px;
+    text-align: center;
+    color: #1a237e;
+    font-weight: 500;
+}
+
+.specialization-item {
+    background: #f0f7ff;
+    padding: 12px 15px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e3f2fd;
+    transition: all 0.3s ease;
+}
+
+.specialization-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    background: #e3f2fd;
+}
+
+.specialization-header {
+    margin-bottom: 8px;
+}
+
+.specialization-header h4 {
+    margin: 0;
+    color: #1976d2;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.specialization-item p {
+    margin: 0;
+    color: #546e7a;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.no-data {
+    text-align: center;
+    color: #455a64;
+    padding: 12px;
+    font-style: italic;
+    background: #f5f7fa;
+    border-radius: 8px;
+    margin: 4px 0;
+    font-size: 13px;
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 1100;
+    animation: slideIn 0.3s ease-out;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.notification.success {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.notification.error {
+    background-color: #f44336;
+    color: white;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Doctor Modal Styles */
+.modal-content.doctor-modal {
+    max-width: 800px;
+    max-height: 80%;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.modal-content.doctor-modal form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 0 12px;
+}
+
+.modal-content.doctor-modal .form-left,
+.modal-content.doctor-modal .form-right {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modal-content.doctor-modal .image-upload-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    border: 2px dashed #e8eaf6;
+    transition: all 0.3s ease;
+}
+
+.modal-content.doctor-modal .image-upload-section:hover {
+    border-color: #1a237e;
+    background: #f0f4ff;
+}
+
+.modal-content.doctor-modal .image-preview {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 12px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.modal-content.doctor-modal .image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.modal-content.doctor-modal .image-upload-section input[type="file"] {
+    display: none;
+}
+
+.modal-content.doctor-modal .upload-button {
+    display: inline-block;
+    padding: 8px 16px;
+    background: #1a237e;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.modal-content.doctor-modal .upload-button:hover {
+    background: #283593;
+    transform: translateY(-1px);
+}
+
+.modal-content.doctor-modal .modal-footer {
+    margin-top: 16px;
+    padding-top: 16px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.modal-content.doctor-modal .modal-header {
+    background: #1a237e;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 12px 12px 0 0;
+    margin: -24px -24px 12px -24px;
+}
+
+.modal-content.doctor-modal .modal-header h3 {
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.modal-content.doctor-modal .close-button {
+    color: white;
+    font-size: 24px;
+    opacity: 0.8;
+    transition: opacity 0.3s;
+}
+
+.modal-content.doctor-modal .close-button:hover {
+    opacity: 1;
+}
+
+.modal-content.doctor-modal .form-group {
+    margin-bottom: 0;
+}
+
+.modal-content.doctor-modal label {
+    display: block;
+    color: #455a64;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.modal-content.doctor-modal select,
+.modal-content.doctor-modal textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #e8eaf6;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #455a64;
+    background: #fff;
+    transition: all 0.3s ease;
+}
+
+.modal-content.doctor-modal select:focus,
+.modal-content.doctor-modal textarea:focus {
+    outline: none;
+    border-color: #1a237e;
+    box-shadow: 0 0 0 2px rgba(26, 35, 126, 0.1);
+}
+
+.modal-content.doctor-modal select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23455a64' d='M6 8.825L1.175 4 2.05 3.125 6 7.075 9.95 3.125 10.825 4z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+}
+
+.modal-content.doctor-modal textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.modal-content.doctor-modal .cancel-button {
+    padding: 10px 20px;
+    background: #f5f5f5;
+    color: #455a64;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-content.doctor-modal .submit-button {
+    padding: 10px 20px;
+    background: #1a237e;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-content.doctor-modal .submit-button:hover {
+    background: #283593;
+    transform: translateY(-1px);
+}
+
+.modal-content.doctor-modal .cancel-button:hover {
+    background: #e0e0e0;
+}

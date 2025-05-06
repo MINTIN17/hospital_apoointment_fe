@@ -1,0 +1,516 @@
+.profile-page {
+    min-height: 100vh;
+    min-width: 100vw;
+    background-color: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Top Bar */
+.top-bar {
+    background-color: #003087;
+    color: white;
+    padding: 12px 0;
+    font-size: 14px;
+    width: 100%;
+}
+
+.top-bar-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+}
+
+.contact-info span,
+.user-greeting span {
+    color: white;
+    text-decoration: none;
+}
+
+.separator {
+    margin: 0 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Navigation */
+.main-nav {
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 16px 0;
+    width: 100%;
+}
+
+.nav-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 24px;
+    position: relative;
+}
+
+.logo {
+    position: absolute;
+    left: 24px;
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.logo-link img {
+    height: 44px;
+}
+
+.logo-link span {
+    font-size: 22px;
+    font-weight: bold;
+    color: #003087;
+}
+
+.nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    justify-content: center;
+}
+
+.nav-links a {
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    padding: 8px 0;
+    position: relative;
+    display: inline-block;
+}
+
+.nav-links a:hover {
+    color: #003087;
+}
+
+.nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: #003087;
+    transition: width 0.3s ease;
+}
+
+.nav-links a:hover::after {
+    width: 100%;
+}
+
+.nav-links a.active {
+    color: #003087;
+}
+
+.nav-links a.active::after {
+    width: 100%;
+}
+
+/* Profile Content */
+.profile-content {
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 0 24px;
+    flex: 1;
+    background-color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 32px;
+    position: relative;
+}
+
+/* Medical Record Header */
+.medical-record-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #003087;
+}
+
+.medical-record-header h1 {
+    color: #003087;
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+}
+
+.medical-record-header p {
+    color: #666;
+    margin: 0;
+    font-size: 16px;
+}
+
+/* Patient Info Section */
+.patient-info {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 40px;
+    padding: 24px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.patient-info-header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.avatar-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.patient-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 3px solid #003087;
+}
+
+.change-avatar-btn {
+    background-color: #e9ecef;
+    color: #003087;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.change-avatar-btn:hover {
+    background-color: #003087;
+    color: #fff;
+}
+
+.patient-basic-info {
+    padding-top: 8px;
+}
+
+.patient-basic-info h2 {
+    color: #003087;
+    font-size: 24px;
+    margin: 0 0 8px 0;
+}
+
+.patient-basic-info p {
+    color: #666;
+    margin: 0;
+    font-size: 14px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.info-item {
+    padding: 16px;
+    background-color: white;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    position: relative;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+}
+
+.info-item.locked {
+    background-color: #f8f9fa;
+}
+
+.info-item.locked label {
+    color: #999;
+}
+
+.info-item.locked p {
+    color: #666;
+}
+
+.info-item.editable {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.info-item.editable:hover {
+    border-color: #003087;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.info-item.editable p {
+    position: relative;
+    padding-right: 24px;
+    margin: 0;
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.info-item.editable p::after {
+    content: '✎';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #003087;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.info-item.editable:hover p::after {
+    opacity: 1;
+}
+
+.info-item.editing {
+    background-color: #fff;
+    border: 1px solid #003087;
+    padding: 16px;
+    min-height: 80px;
+}
+
+.edit-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.edit-controls input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    font-size: 16px;
+    background-color: #f8f9fa;
+    color: #333;
+    transition: all 0.3s ease;
+    height: 40px;
+    box-sizing: border-box;
+}
+
+.edit-controls input:focus {
+    outline: none;
+    border-color: #003087;
+    background-color: #fff;
+    box-shadow: 0 0 0 2px rgba(0, 48, 135, 0.1);
+}
+
+.edit-controls input[type="date"] {
+    font-family: inherit;
+    color: #333;
+}
+
+.edit-controls input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(0.5);
+}
+
+.edit-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.save-btn, .cancel-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.save-btn {
+    background-color: #003087;
+    color: white;
+}
+
+.save-btn:hover {
+    background-color: #002366;
+}
+
+.cancel-btn {
+    background-color: #e9ecef;
+    color: #666;
+}
+
+.cancel-btn:hover {
+    background-color: #dee2e6;
+}
+
+.info-item label {
+    display: block;
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.info-item p {
+    color: #333;
+    margin: 0;
+    font-weight: 500;
+    font-size: 16px;
+}
+
+/* Medical Info Section */
+.medical-info {
+    margin-top: 40px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #003087;
+}
+
+.section-header h2 {
+    color: #003087;
+    font-size: 20px;
+    margin: 0;
+    font-weight: 600;
+}
+
+.edit-profile-btn {
+    background-color: #003087;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.edit-profile-btn:hover {
+    background-color: #002366;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.edit-profile-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.logout-btn {
+    background-color: transparent;
+    border: 2px solid white;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 16px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.logout-btn:hover {
+    background-color: white;
+    color: #003087;
+    transform: translateY(-2px);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .profile-content {
+        margin: 20px;
+        padding: 24px;
+    }
+
+    .nav-links {
+        gap: 24px;
+    }
+}
+
+@media (max-width: 992px) {
+    .patient-info {
+        grid-template-columns: 1fr;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .nav-links {
+        gap: 16px;
+    }
+
+    .nav-links a {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+    }
+
+    .patient-info-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .patient-avatar {
+        width: 100px;
+        height: 100px;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-content {
+        padding: 16px;
+        margin: 10px;
+    }
+
+    .medical-record-header h1 {
+        font-size: 24px;
+    }
+
+    .section-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+} 
