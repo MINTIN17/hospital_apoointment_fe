@@ -38,6 +38,25 @@ const PrivateRoutes: React.FC<PrivateRoutesProps> = ({ children, requireAdmin })
                 }
                 console.log('PrivateRoutes - No user data, is admin');
                 setIsAdmin(true);
+            } else {
+                // Kiểm tra trạng thái enabled cho user thường
+                const userData = localStorage.getItem('user');
+                if (userData) {
+                    try {
+                        const userInfo = JSON.parse(userData);
+                        if (userInfo.user && !userInfo.user.enabled) {
+                            console.log('PrivateRoutes - Account is disabled');
+                            setIsAuthenticated(false);
+                            setIsChecking(false);
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('PrivateRoutes - Error parsing user data:', error);
+                        setIsAuthenticated(false);
+                        setIsChecking(false);
+                        return;
+                    }
+                }
             }
 
             console.log('PrivateRoutes - Authentication successful');

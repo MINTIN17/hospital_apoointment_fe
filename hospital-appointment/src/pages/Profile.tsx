@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import '../styles/Profile.css';
 import logoImage from '../assets/logo.png';
+import axios from 'axios';
 
 interface UserData {
     name: string;
@@ -25,22 +26,42 @@ const Profile: React.FC = () => {
     const [user, setUser] = useState<UserData>({ name: '', email: '' });
     const [editingField, setEditingField] = useState<string | null>(null);
     const [editValue, setEditValue] = useState<string>('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string>('');
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    const showNotification = (message: string, type: 'success' | 'error') => {
+        setNotification({ message, type });
+        setTimeout(() => {
+            setNotification(null);
+        }, 3000);
+    };
 
     useEffect(() => {
-        console.log('Profile - Component mounted');
-        const userData = localStorage.getItem('user');
-        if (userData) {
+        const fetchUserData = async () => {
             try {
-                const parsedUser = JSON.parse(userData);
-                console.log('Profile - User data loaded:', parsedUser);
-                console.log('Birth date from storage:', parsedUser.dateOfBirth);
-                setUser(parsedUser);
+                const userData = localStorage.getItem('user');
+                if (userData) {
+                    const userInfo = JSON.parse(userData);
+                    if (userInfo.user) {
+                        setUser({
+                            name: userInfo.user.name,
+                            email: userInfo.user.email,
+                            phone: userInfo.user.phone,
+                            gender: userInfo.user.gender,
+                            dateOfBirth: userInfo.user.dateOfBirth,
+                            avatarUrl: userInfo.user.avatarUrl,
+                            address: userInfo.user.address
+                        });
+                    }
+                }
             } catch (error) {
-                console.error('Profile - Error parsing user data:', error);
+                console.error('Error fetching user data:', error);
             }
-        } else {
-            console.log('Profile - No user data found');
-        }
+        };
+
+        fetchUserData();
     }, []);
 
     const handleLogout = () => {
@@ -128,6 +149,88 @@ const Profile: React.FC = () => {
 
     const handleCancel = () => {
         setEditingField(null);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setError('');
+
+        try {
+            const userData = localStorage.getItem('user');
+            if (!userData) {
+                throw new Error('User data not found');
+            }
+
+            const userInfo = JSON.parse(userData);
+            const patientId = userInfo.patient.id;
+
+            const formData = new FormData();
+            if (selectedFile) {
+                formData.append("file", selectedFile);
+                formData.append("upload_preset", "Hospital");
+
+                // Upload ảnh lên Cloudinary
+                const uploadResponse = await axios.post(
+                    `https://api.cloudinary.com/v1_1/di53bdbjf/image/upload`,
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    }
+                );
+
+                // Cập nhật avatarUrl trong user object
+                user.avatarUrl = uploadResponse.data.secure_url;
+            }
+
+            // Cập nhật thông tin user
+            const response = await axios.put(
+                `http://localhost:8801/api/patient/update/${patientId}`,
+                {
+                    name: user.name,
+                    email: user.email,
+                    phone: user.phone,
+                    gender: user.gender,
+                    dateOfBirth: user.dateOfBirth,
+                    avatarUrl: user.avatarUrl,
+                    address: user.address
+                },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                }
+            );
+
+            // Cập nhật localStorage với thông tin mới
+            const updatedUserData = {
+                ...userInfo,
+                user: {
+                    ...userInfo.user,
+                    name: user.name,
+                    email: user.email,
+                    phone: user.phone,
+                    gender: user.gender,
+                    dateOfBirth: user.dateOfBirth,
+                    avatarUrl: user.avatarUrl,
+                    address: user.address
+                }
+            };
+            localStorage.setItem('user', JSON.stringify(updatedUserData));
+
+            showNotification('Cập nhật thông tin thành công', 'success');
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            if (axios.isAxiosError(error)) {
+                setError(error.response?.data?.message || 'Cập nhật thông tin thất bại');
+            } else {
+                setError('Đã xảy ra lỗi không xác định');
+            }
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const renderField = (field: string, label: string, value: string | number | undefined, isLocked: boolean = false) => {

@@ -5,6 +5,7 @@ import PrivateRoutes from './privateRoutes';
 import HomePage from '../pages/HomePage';
 import Profile from '../pages/Profile';
 import Admin from '../pages/Admin';
+import AccountDisabled from '../pages/AccountDisabled';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode; requireAdmin?: boolean }> = ({ children, requireAdmin }) => {
     const token = localStorage.getItem('token');
@@ -47,6 +48,7 @@ const AppRoutes = () => {
                         <Admin />
                     </PrivateRoute>
                 } />
+                <Route path="/account-disabled" element={<AccountDisabled />} />
                 <Route path="*" element={<Navigate to="/home" replace />} />
             </Routes>
         </BrowserRouter>

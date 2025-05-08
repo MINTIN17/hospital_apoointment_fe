@@ -61,9 +61,21 @@ const Login: React.FC = () => {
 
             // Kiểm tra loại tài khoản và chuyển hướng phù hợp
             const userData = localStorage.getItem('user');
+            console.log('User data:', userData);
+
             if (userData) {
                 // Nếu có user data -> là patient
-                navigate('/home', { replace: true });
+                const userInfo = JSON.parse(userData);
+                if (userInfo.user) {
+                    // Kiểm tra trạng thái enabled của user
+                    if (!userInfo.user.enabled) {
+                        // Nếu tài khoản bị khóa
+                        navigate('/account-disabled', { replace: true });
+                    } else {
+                        // Nếu tài khoản hoạt động bình thường
+                        navigate('/home', { replace: true });
+                    }
+                }
             } else {
                 // Nếu không có user data -> là admin
                 navigate('/admin', { replace: true });

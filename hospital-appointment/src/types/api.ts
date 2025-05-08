@@ -1,5 +1,4 @@
 export interface User {
-    id: string;
     name: string;
     email: string;
     phone: string;
@@ -7,8 +6,12 @@ export interface User {
     dateOfBirth: string;
     avatarUrl: string;
     address: string;
-    createdAt: string;
-    updatedAt: string;
+    enabled: boolean;
+}
+
+export interface Patient {
+    id: string;
+    user: User;
 }
 
 export interface RegisterRequest {
@@ -34,8 +37,8 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-    user: User;
     token: string;
+    patient: Patient;
 }
 
 export interface ApiError {

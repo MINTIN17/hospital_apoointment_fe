@@ -59,8 +59,8 @@ export const authService = {
             localStorage.setItem('token', response.data.token);
             
             // Lưu user data
-            if (response.data.user) {
-                localStorage.setItem('user', JSON.stringify(response.data.user));
+            if (response.data.patient) {
+                localStorage.setItem('user', JSON.stringify(response.data.patient));
             }
             console.log('Auth Service - Data stored in localStorage');
             return response.data;

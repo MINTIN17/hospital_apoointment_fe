@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import PrivateRoutes from './routes/privateRoutes';
 import Admin from './pages/Admin';
+import AccountDisabled from './pages/AccountDisabled';
 
 const App: React.FC = () => {
   const location = useLocation();
@@ -25,6 +26,7 @@ const App: React.FC = () => {
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/account-disabled" element={<AccountDisabled />} />
 
         {/* Admin route */}
         <Route path="/admin" element={
@@ -37,6 +39,7 @@ const App: React.FC = () => {
         <Route element={<PrivateRoutes />}>
           <Route path="/home" element={<HomePage />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/account-disabled" element={<AccountDisabled />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

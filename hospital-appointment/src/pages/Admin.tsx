@@ -22,8 +22,29 @@ interface Specialization {
 interface Doctor {
     id: number;
     name: string;
-    specialization: string;
+    specialization_name: string;
+    dateOfBirth: string;
+    about: string;
+    gender: string;
     avatarUrl: string;
+    yearsOfExperience: string;
+    email: string;
+    phone: string;
+    address: string;
+}
+
+interface Patient {
+    id: number;
+    user: {
+        name: string;
+        email: string;
+        phone: string;
+        gender: string;
+        dateOfBirth: string;
+        avatarUrl: string;
+        address: string;
+        enabled: boolean;
+    }
 }
 
 const Admin: React.FC = () => {
@@ -61,9 +82,15 @@ const Admin: React.FC = () => {
         address: ''
     });
     const [searchTerm, setSearchTerm] = useState('');
+    const [doctorSearchTerm, setDoctorSearchTerm] = useState('');
+    const [selectedSpecialization, setSelectedSpecialization] = useState('');
     const [filteredSpecializations, setFilteredSpecializations] = useState<Specialization[]>([]);
+    const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
     const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [patients, setPatients] = useState<Patient[]>([]);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage] = useState(10);
 
     useEffect(() => {
         const checkAccess = () => {
@@ -97,8 +124,15 @@ const Admin: React.FC = () => {
     useEffect(() => {
         if (selectedHospital) {
             setFilteredSpecializations(specializations);
+            setFilteredDoctors(doctors);
         }
-    }, [specializations, selectedHospital]);
+    }, [specializations, doctors, selectedHospital]);
+
+    useEffect(() => {
+        if (activeTab === 'patients') {
+            fetchPatients();
+        }
+    }, [activeTab]);
 
     const fetchHospitals = async () => {
         try {
@@ -112,6 +146,24 @@ const Admin: React.FC = () => {
             setHospitals(response.data);
         } catch (error) {
             console.error('Error fetching hospitals:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchPatients = async () => {
+        try {
+            setIsLoading(true);
+            const token = localStorage.getItem('token');
+            const response = await axios.get('http://localhost:8801/api/patient/getAllPatient', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            setPatients(response.data);
+        } catch (error) {
+            console.error('Error fetching patients:', error);
+            showNotification('Không thể tải danh sách bệnh nhân', 'error');
         } finally {
             setIsLoading(false);
         }
@@ -180,22 +232,26 @@ const Admin: React.FC = () => {
         setSelectedHospital(hospital);
         setShowHospitalDetailModal(true);
         try {
+            const token = localStorage.getItem('token');
             // Gọi API lấy danh sách chuyên khoa
             const specializations = await specializationService.getAllSpecializations(hospital.id.toString());
             console.log('Danh sách chuyên khoa:', specializations);
             setSpecializations(specializations);
 
-            // Tạm thời comment phần API doctor
-            /*
-            const doctorResponse = await axios.get(`http://localhost:8801/api/doctor/hospital/${hospital.id}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
+            // Gọi API lấy danh sách bác sĩ
+            const doctorResponse = await axios.get(
+                `http://localhost:8801/api/doctor/getDoctorByHospital?hospital_id=${hospital.id}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
                 }
-            });
+            );
+            console.log('Danh sách bác sĩ:', doctorResponse.data);
             setDoctors(doctorResponse.data);
-            */
         } catch (error) {
             console.error('Error fetching hospital details:', error);
+            showNotification('Không thể tải thông tin bệnh viện', 'error');
         }
     };
 
@@ -314,9 +370,8 @@ const Admin: React.FC = () => {
                 }
             );
 
-            console.log('Response:', response.data);
-
-            if (response.data === "success") {
+            // Kiểm tra response status thay vì response data
+            if (response.status === 200 || response.status === 201) {
                 showNotification('Thêm bác sĩ thành công', 'success');
                 setShowAddDoctorModal(false);
                 setDoctorForm({
@@ -343,15 +398,16 @@ const Admin: React.FC = () => {
                     });
                     setDoctors(doctorResponse.data);
                 }
-            } else {
-                showNotification('Có lỗi xảy ra khi thêm bác sĩ', 'error');
             }
         } catch (error: any) {
             console.error('Error adding doctor:', error);
-            if (error.response?.data?.message) {
-                showNotification(error.response.data.message, 'error');
-            } else {
-                showNotification('Có lỗi xảy ra khi thêm bác sĩ', 'error');
+            // Chỉ hiển thị lỗi nếu không phải lỗi 403
+            if (error.response?.status !== 403) {
+                if (error.response?.data?.message) {
+                    showNotification(error.response.data.message, 'error');
+                } else {
+                    showNotification('Có lỗi xảy ra khi thêm bác sĩ', 'error');
+                }
             }
         }
     };
@@ -372,10 +428,186 @@ const Admin: React.FC = () => {
         }
     };
 
+    const handleDoctorSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const searchTerm = e.target.value.toLowerCase();
+        setDoctorSearchTerm(searchTerm);
+        filterDoctors(searchTerm, selectedSpecialization);
+    };
+
+    const handleSpecializationFilter = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const specialization = e.target.value;
+        setSelectedSpecialization(specialization);
+        filterDoctors(doctorSearchTerm, specialization);
+    };
+
+    const filterDoctors = (searchTerm: string, specialization: string) => {
+        if (selectedHospital) {
+            let filtered = doctors;
+
+            // Lọc theo tên
+            if (searchTerm) {
+                filtered = filtered.filter(doctor =>
+                    doctor.name.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            // Lọc theo chuyên khoa
+            if (specialization) {
+                filtered = filtered.filter(doctor =>
+                    doctor.specialization_name === specialization
+                );
+            }
+
+            setFilteredDoctors(filtered);
+        }
+    };
+
+    const handleTogglePatientStatus = async (patientId: number, currentStatus: boolean) => {
+        try {
+            const token = localStorage.getItem('token');
+            const endpoint = currentStatus ?
+                `http://localhost:8801/api/patient/ban?patient_id=${patientId}` :
+                `http://localhost:8801/api/patient/unban?patient_id=${patientId}`;
+
+            await axios.put(endpoint, {}, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            // Refresh danh sách patients sau khi ban/unban
+            await fetchPatients();
+            showNotification(`Đã ${currentStatus ? 'khóa' : 'mở khóa'} tài khoản thành công`, 'success');
+        } catch (error) {
+            console.error('Error toggling patient status:', error);
+            showNotification('Có lỗi xảy ra khi thay đổi trạng thái tài khoản', 'error');
+        }
+    };
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    };
+
+    // Tính toán số trang và danh sách bệnh nhân cho trang hiện tại
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentPatients = patients.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(patients.length / itemsPerPage);
+
+    const handlePageChange = (pageNumber: number) => {
+        setCurrentPage(pageNumber);
+    };
+
+    const renderPagination = () => {
+        const pageNumbers = [];
+        for (let i = 1; i <= totalPages; i++) {
+            pageNumbers.push(i);
+        }
+
+        return (
+            <div className="pagination">
+                <button
+                    className="pagination-button"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                >
+                    &laquo;
+                </button>
+                {pageNumbers.map(number => (
+                    <button
+                        key={number}
+                        className={`pagination-button ${currentPage === number ? 'active' : ''}`}
+                        onClick={() => handlePageChange(number)}
+                    >
+                        {number}
+                    </button>
+                ))}
+                <button
+                    className="pagination-button"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                >
+                    &raquo;
+                </button>
+            </div>
+        );
+    };
+
     const renderContent = () => {
         switch (activeTab) {
             case 'patients':
-                return <div className="admin-content">Quản lý bệnh nhân</div>;
+                return (
+                    <div className="admin-content">
+                        <div className="content-header">
+                            <h2>Quản lý bệnh nhân</h2>
+                        </div>
+                        <div className="content-body">
+                            {isLoading ? (
+                                <div className="loading">Đang tải...</div>
+                            ) : (
+                                <>
+                                    <div className="patients-table-container">
+                                        <table className="patients-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Ảnh</th>
+                                                    <th>Họ và tên</th>
+                                                    <th>Email</th>
+                                                    <th>Số điện thoại</th>
+                                                    <th>Giới tính</th>
+                                                    <th>Ngày sinh</th>
+                                                    <th>Địa chỉ</th>
+                                                    <th>Trạng thái</th>
+                                                    <th>Thao tác</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {currentPatients.map((patient) => (
+                                                    <tr key={patient.id}>
+                                                        <td>{patient.id}</td>
+                                                        <td>
+                                                            <img
+                                                                src={patient.user.avatarUrl}
+                                                                alt={patient.user.name}
+                                                                className="patient-avatar"
+                                                            />
+                                                        </td>
+                                                        <td>{patient.user.name}</td>
+                                                        <td>{patient.user.email}</td>
+                                                        <td>{patient.user.phone}</td>
+                                                        <td>{patient.user.gender === 'MALE' ? 'Nam' : 'Nữ'}</td>
+                                                        <td>{formatDate(patient.user.dateOfBirth)}</td>
+                                                        <td>{patient.user.address}</td>
+                                                        <td>
+                                                            <span className={`status-badge ${patient.user.enabled ? 'active' : 'disabled'}`}>
+                                                                {patient.user.enabled ? 'Hoạt động' : 'Đã khóa'}
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <button
+                                                                className={`toggle-button ${patient.user.enabled ? 'disable' : 'enable'}`}
+                                                                onClick={() => handleTogglePatientStatus(patient.id, patient.user.enabled)}
+                                                            >
+                                                                {patient.user.enabled ? 'Khóa' : 'Mở khóa'}
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {totalPages > 1 && renderPagination()}
+                                </>
+                            )}
+                        </div>
+                    </div>
+                );
             case 'hospitals':
                 return (
                     <div className="admin-content">
@@ -634,24 +866,72 @@ const Admin: React.FC = () => {
                             <div className="doctors-section">
                                 <div className="section-header">
                                     <h3>Danh Sách Bác Sĩ</h3>
-                                    <button
-                                        className="add-button"
-                                        onClick={() => setShowAddDoctorModal(true)}
-                                    >
-                                        <span className="icon">➕</span>
-                                        Thêm Bác Sĩ
-                                    </button>
-                                </div>
-                                <div className="doctors-grid">
-                                    {doctors.map(doctor => (
-                                        <div key={doctor.id} className="doctor-card">
-                                            <img src={doctor.avatarUrl} alt={doctor.name} />
-                                            <div className="doctor-info">
-                                                <h4>{doctor.name}</h4>
-                                                <p>{doctor.specialization}</p>
-                                            </div>
+                                    <div className="header-actions">
+                                        <div className="search-box">
+                                            <input
+                                                type="text"
+                                                placeholder="Tìm kiếm bác sĩ..."
+                                                value={doctorSearchTerm}
+                                                onChange={handleDoctorSearch}
+                                            />
+                                            <span className="search-icon">🔍</span>
                                         </div>
-                                    ))}
+                                        <select
+                                            className="specialization-filter"
+                                            value={selectedSpecialization}
+                                            onChange={handleSpecializationFilter}
+                                        >
+                                            <option value="">Tất cả chuyên khoa</option>
+                                            {specializations.map(spec => (
+                                                <option key={spec.id} value={spec.name}>
+                                                    {spec.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            className="add-button"
+                                            onClick={() => setShowAddDoctorModal(true)}
+                                        >
+                                            <span className="icon">➕</span>
+                                            Thêm Bác Sĩ
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="doctors-list">
+                                    {filteredDoctors && filteredDoctors.length > 0 ? (
+                                        <table className="specialization-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>STT</th>
+                                                    <th>Họ và tên</th>
+                                                    <th>Giới tính</th>
+                                                    <th>Ngày sinh</th>
+                                                    <th>Chuyên khoa</th>
+                                                    <th>Năm kinh nghiệm</th>
+                                                    <th>Email</th>
+                                                    <th>Số điện thoại</th>
+                                                    <th>Địa chỉ</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {filteredDoctors.map((doctor, index) => (
+                                                    <tr key={doctor.id}>
+                                                        <td>{index + 1}</td>
+                                                        <td>{doctor.name}</td>
+                                                        <td>{doctor.gender}</td>
+                                                        <td>{doctor.dateOfBirth}</td>
+                                                        <td>{doctor.specialization_name}</td>
+                                                        <td>{doctor.yearsOfExperience}</td>
+                                                        <td>{doctor.email}</td>
+                                                        <td>{doctor.phone}</td>
+                                                        <td>{doctor.address}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    ) : (
+                                        <div className="no-data">Chưa có bác sĩ nào</div>
+                                    )}
                                 </div>
                             </div>
                         </div>

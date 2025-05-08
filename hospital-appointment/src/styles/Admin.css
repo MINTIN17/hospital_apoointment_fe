@@ -135,25 +135,26 @@
 }
 
 .add-button {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    background-color: #4CAF50;
+    background-color: #1a237e;
     color: white;
     border: none;
     border-radius: 4px;
-    cursor: pointer;
+    padding: 8px 12px;
     font-size: 14px;
-    transition: background-color 0.3s;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .add-button:hover {
-    background-color: #45a049;
+    background-color: #283593;
+    transform: translateY(-1px);
 }
 
 .add-button .icon {
-    font-size: 18px;
+    font-size: 16px;
 }
 
 /* Responsive Design */
@@ -466,41 +467,53 @@
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .search-box {
-    position: relative;
-    width: 240px;
-    right: 60px;
-}
-
-.search-box input {
-    width: 100%;
-    padding: 8px 12px;
-    padding-right: 35px;
-    border: 1px solid #e8eaf6;
-    border-radius: 8px;
-    font-size: 13px;
-    color: #455a64;
-    background: white;
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-right: 10px;
     transition: all 0.3s ease;
 }
 
-.search-box input:focus {
-    outline: none;
+.search-box:hover {
     border-color: #1a237e;
-    box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
+}
+
+.search-box:focus-within {
+    border-color: #1a237e;
+    box-shadow: 0 0 0 2px rgba(26, 35, 126, 0.1);
+}
+
+.search-box input {
+    border: none !important;
+    outline: none;
+    padding: 8px 12px;
+    font-size: 14px;
+    width: 200px;
+    color: #333;
+    background-color: transparent;
+    box-shadow: none;
+}
+
+.search-box input:focus {
+    border: none !important;
+    outline: none;
+    box-shadow: none;
+}
+
+.search-box input::placeholder {
+    color: #999;
 }
 
 .search-box .search-icon {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #1a237e;
+    color: #666;
+    margin-left: 4px;
     font-size: 16px;
-    pointer-events: none;
 }
 
 .departments-section {
@@ -1019,4 +1032,177 @@
 
 .modal-content.doctor-modal .cancel-button:hover {
     background: #e0e0e0;
+}
+
+/* Patients Table Styles */
+.patients-table-container {
+    overflow-x: auto;
+    margin-top: 20px;
+}
+
+.patients-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.patients-table th {
+    background-color: #f5f7fa;
+    color: #1a237e;
+    font-weight: 600;
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 14px;
+    border-bottom: 2px solid #e8eaf6;
+}
+
+.patients-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e8eaf6;
+    color: #455a64;
+    font-size: 14px;
+}
+
+.patients-table tbody tr:hover {
+    background-color: #f5f7fa;
+}
+
+.patient-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-badge.active {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-badge.disabled {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.toggle-button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.toggle-button.disable {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+.toggle-button.disable:hover {
+    background-color: #ffcdd2;
+}
+
+.toggle-button.enable {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.toggle-button.enable:hover {
+    background-color: #c8e6c9;
+}
+
+/* Loading state */
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-size: 16px;
+}
+
+/* Pagination Styles */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding: 10px 0;
+}
+
+.pagination-button {
+    padding: 8px 12px;
+    border: 1px solid #e8eaf6;
+    background: white;
+    color: #1a237e;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    min-width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pagination-button:hover:not(:disabled) {
+    background: #e8eaf6;
+    border-color: #1a237e;
+}
+
+.pagination-button.active {
+    background: #1a237e;
+    color: white;
+    border-color: #1a237e;
+}
+
+.pagination-button:disabled {
+    background: #f5f5f5;
+    color: #9e9e9e;
+    cursor: not-allowed;
+    border-color: #e0e0e0;
+}
+
+.specialization-filter {
+    padding: 8px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #333;
+    font-size: 14px;
+    min-width: 200px;
+    margin-right: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.specialization-filter:hover {
+    border-color: #1a237e;
+}
+
+.specialization-filter:focus {
+    outline: none;
+    border-color: #1a237e;
+    box-shadow: 0 0 0 2px rgba(26, 35, 126, 0.1);
+}
+
+.specialization-filter option {
+    padding: 8px;
+    background-color: #fff;
+    color: #333;
+}
+
+.specialization-filter option:hover {
+    background-color: #f0f4ff;
 }
