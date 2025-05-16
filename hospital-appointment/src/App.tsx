@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import PrivateRoutes from './routes/privateRoutes';
 import Admin from './pages/Admin';
+import Doctor from './pages/Doctor';
 import AccountDisabled from './pages/AccountDisabled';
 
 const App: React.FC = () => {
@@ -32,6 +33,13 @@ const App: React.FC = () => {
         <Route path="/admin" element={
           <PrivateRoutes requireAdmin={true}>
             <Admin />
+          </PrivateRoutes>
+        } />
+
+        {/* Doctor route */}
+        <Route path="/doctor" element={
+          <PrivateRoutes>
+            <Doctor />
           </PrivateRoutes>
         } />
 

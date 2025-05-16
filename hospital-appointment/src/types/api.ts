@@ -6,7 +6,24 @@ export interface User {
     dateOfBirth: string;
     avatarUrl: string;
     address: string;
+    role: 'PATIENT' | 'DOCTOR';
     enabled: boolean;
+}
+export interface doctorResponse {
+    id: string;
+    about: string;
+    name: string;
+    email: string;
+    phone: string;
+    gender: 'MALE' | 'FEMALE' | 'OTHER';
+    dateOfBirth: string;
+    avatarUrl: string;
+    address: string;
+    specialization_name: string;
+    hospital_name: string;
+    role: 'PATIENT' | 'DOCTOR';
+    yearsOfExperience: number;
+    // enabled: boolean;
 }
 
 export interface Patient {
@@ -39,6 +56,7 @@ export interface LoginRequest {
 export interface LoginResponse {
     token: string;
     patient: Patient;
+    doctorResponse: doctorResponse;
 }
 
 export interface ApiError {

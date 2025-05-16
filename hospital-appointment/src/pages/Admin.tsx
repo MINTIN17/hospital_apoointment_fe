@@ -79,7 +79,8 @@ const Admin: React.FC = () => {
         image: null as File | null,
         gender: 'MALE',
         dateOfBirth: '',
-        address: ''
+        address: '',
+        hospital_id: ''
     });
     const [searchTerm, setSearchTerm] = useState('');
     const [doctorSearchTerm, setDoctorSearchTerm] = useState('');
@@ -316,6 +317,29 @@ const Admin: React.FC = () => {
         }
     };
 
+    const resetDoctorForm = () => {
+        setDoctorForm({
+            name: '',
+            email: '',
+            password: '',
+            phone: '',
+            experience: '',
+            about: '',
+            specialization: '',
+            image: null,
+            gender: 'MALE',
+            dateOfBirth: '',
+            address: '',
+            hospital_id: ''
+        });
+        setPreviewImage(null);
+        // Reset file input
+        const fileInput = document.getElementById('doctorImage') as HTMLInputElement;
+        if (fileInput) {
+            fileInput.value = '';
+        }
+    };
+
     const handleAddDoctor = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -327,6 +351,11 @@ const Admin: React.FC = () => {
 
             if (!doctorForm.image) {
                 showNotification('Vui lòng chọn ảnh', 'error');
+                return;
+            }
+
+            if (!selectedHospital) {
+                showNotification('Vui lòng chọn bệnh viện', 'error');
                 return;
             }
 
@@ -361,7 +390,8 @@ const Admin: React.FC = () => {
                     },
                     about: doctorForm.about,
                     specialization_id: parseInt(doctorForm.specialization),
-                    yearsOfExperience: parseInt(doctorForm.experience)
+                    yearsOfExperience: parseInt(doctorForm.experience),
+                    hospital_id: selectedHospital.id
                 },
                 {
                     headers: {
@@ -370,24 +400,10 @@ const Admin: React.FC = () => {
                 }
             );
 
-            // Kiểm tra response status thay vì response data
             if (response.status === 200 || response.status === 201) {
                 showNotification('Thêm bác sĩ thành công', 'success');
                 setShowAddDoctorModal(false);
-                setDoctorForm({
-                    name: '',
-                    email: '',
-                    password: '',
-                    phone: '',
-                    experience: '',
-                    about: '',
-                    specialization: '',
-                    image: null,
-                    gender: 'MALE',
-                    dateOfBirth: '',
-                    address: ''
-                });
-                setPreviewImage(null);
+                resetDoctorForm();
 
                 // Refresh danh sách bác sĩ
                 if (selectedHospital) {
@@ -401,14 +417,7 @@ const Admin: React.FC = () => {
             }
         } catch (error: any) {
             console.error('Error adding doctor:', error);
-            // Chỉ hiển thị lỗi nếu không phải lỗi 403
-            if (error.response?.status !== 403) {
-                if (error.response?.data?.message) {
-                    showNotification(error.response.data.message, 'error');
-                } else {
-                    showNotification('Có lỗi xảy ra khi thêm bác sĩ', 'error');
-                }
-            }
+            showNotification(error.response?.data?.message || 'Có lỗi xảy ra khi thêm bác sĩ', 'error');
         }
     };
 
@@ -1006,6 +1015,7 @@ const Admin: React.FC = () => {
                                     <input
                                         type="file"
                                         id="doctorImage"
+                                        name="doctorImage"
                                         accept="image/*"
                                         onChange={handleDoctorImageChange}
                                         required

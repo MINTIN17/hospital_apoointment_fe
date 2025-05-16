@@ -22,7 +22,12 @@ const Login: React.FC = () => {
         if (token) {
             const userData = localStorage.getItem('user');
             if (userData) {
-                navigate('/home');
+                const userInfo = JSON.parse(userData);
+                if (userInfo.role === "DOCTOR") {
+                    navigate('/doctor');
+                } else if (userInfo.role === "PATIENT") {
+                    navigate('/home');
+                }
             } else {
                 navigate('/admin');
             }
@@ -64,17 +69,23 @@ const Login: React.FC = () => {
             console.log('User data:', userData);
 
             if (userData) {
-                // Nếu có user data -> là patient
                 const userInfo = JSON.parse(userData);
-                if (userInfo.user) {
+                console.log('Parsed user info:', userInfo);
+                console.log('User role:', userInfo.role);
+
+                if (userInfo.role === "PATIENT") {
                     // Kiểm tra trạng thái enabled của user
-                    if (!userInfo.user.enabled) {
+                    if (!userInfo.enabled) {
                         // Nếu tài khoản bị khóa
                         navigate('/account-disabled', { replace: true });
                     } else {
                         // Nếu tài khoản hoạt động bình thường
                         navigate('/home', { replace: true });
                     }
+                } else if (userInfo.role === "DOCTOR") {
+                    console.log('Redirecting to doctor page');
+                    // Bác sĩ không cần kiểm tra enabled
+                    navigate('/doctor', { replace: true });
                 }
             } else {
                 // Nếu không có user data -> là admin

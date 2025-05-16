@@ -6,8 +6,9 @@ import HomePage from '../pages/HomePage';
 import Profile from '../pages/Profile';
 import Admin from '../pages/Admin';
 import AccountDisabled from '../pages/AccountDisabled';
+import Doctor from '../pages/Doctor';
 
-const PrivateRoute: React.FC<{ children: React.ReactNode; requireAdmin?: boolean }> = ({ children, requireAdmin }) => {
+const PrivateRoute: React.FC<{ children: React.ReactNode; requireAdmin?: boolean; requireDoctor?: boolean }> = ({ children, requireAdmin, requireDoctor }) => {
     const token = localStorage.getItem('token');
     if (!token) {
         return <Navigate to="/login" replace />;
@@ -21,6 +22,18 @@ const PrivateRoute: React.FC<{ children: React.ReactNode; requireAdmin?: boolean
             return <Navigate to="/home" replace />;
         }
         // Nếu không có user data -> là admin -> cho phép truy cập
+        return <>{children}</>;
+    }
+
+    // Nếu route yêu cầu quyền doctor
+    if (requireDoctor) {
+        const userData = localStorage.getItem('user');
+        if (userData) {
+            const userInfo = JSON.parse(userData);
+            if (userInfo.role !== 'DOCTOR') {
+                return <Navigate to="/home" replace />;
+            }
+        }
         return <>{children}</>;
     }
 
@@ -46,6 +59,11 @@ const AppRoutes = () => {
                 <Route path="/admin" element={
                     <PrivateRoute requireAdmin>
                         <Admin />
+                    </PrivateRoute>
+                } />
+                <Route path="/doctor" element={
+                    <PrivateRoute requireDoctor>
+                        <Doctor />
                     </PrivateRoute>
                 } />
                 <Route path="/account-disabled" element={<AccountDisabled />} />

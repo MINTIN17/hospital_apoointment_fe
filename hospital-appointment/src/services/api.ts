@@ -11,6 +11,25 @@ const api = axios.create({
     },
 });
 
+// Hàm decode JWT token
+const decodeJwt = (token: string): any => {
+    try {
+        // Lấy phần payload của token (phần thứ hai sau khi tách theo dấu chấm)
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+            atob(base64)
+                .split('')
+                .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join('')
+        );
+        return JSON.parse(jsonPayload);
+    } catch (error) {
+        console.error('Error decoding JWT:', error);
+        return null;
+    }
+};
+
 // Thêm interceptor để xử lý token
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
@@ -19,6 +38,10 @@ api.interceptors.request.use((config) => {
         // Đảm bảo token bắt đầu bằng "Bearer "
         const tokenValue = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
         config.headers.Authorization = tokenValue;
+        
+        // Decode và log token payload
+        const decodedToken = decodeJwt(token.replace('Bearer ', ''));
+        console.log('Decoded Token Payload:', decodedToken);
     }
     return config;
 });
@@ -58,10 +81,41 @@ export const authService = {
             // Store token
             localStorage.setItem('token', response.data.token);
             
-            // Lưu user data
-            if (response.data.patient) {
-                localStorage.setItem('user', JSON.stringify(response.data.patient));
+            // Decode và log token ngay sau khi nhận được
+            const decodedToken = decodeJwt(response.data.token.replace('Bearer ', ''));
+            console.log('Login - Decoded Token:', decodedToken);
+            
+            // Lưu role từ token
+            if (decodedToken && decodedToken.role) {
+                console.log('Role từ token:', decodedToken.role);
+                
+                // Lưu user data theo role
+                switch(decodedToken.role) {
+                    case 'PATIENT':
+                        if (response.data.patient) {
+                            const userData = {
+                                ...response.data.patient,
+                                role: decodedToken.role
+                            };
+                            localStorage.setItem('user', JSON.stringify(userData));
+                        }
+                        break;
+                    case 'DOCTOR':
+                        if (response.data.doctorResponse) {
+                            const userData = {
+                                ...response.data.doctorResponse,
+                                role: decodedToken.role
+                            };
+                            localStorage.setItem('user', JSON.stringify(userData));
+                        }
+                        break;
+                    default:
+                        console.warn('Role không xác định trong token:', decodedToken.role);
+                }
+            } else {
+                console.warn('Không tìm thấy role trong token');
             }
+            
             console.log('Auth Service - Data stored in localStorage');
             return response.data;
         } catch (error) {
