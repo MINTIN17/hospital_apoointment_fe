@@ -1,0 +1,100 @@
+.doctor-list {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.doctor-list h2 {
+    color: #2c3e50;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.doctor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.doctor-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    display: flex;
+    gap: 1rem;
+    transition: transform 0.2s;
+}
+
+.doctor-card:hover {
+    transform: translateY(-5px);
+}
+
+.doctor-avatar {
+    width: 80px;
+    height: 80px;
+    background-color: #003087;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.doctor-info {
+    flex: 1;
+}
+
+.doctor-info h3 {
+    color: #2c3e50;
+    margin: 0 0 0.5rem 0;
+}
+
+.specialization {
+    color: #666;
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.experience {
+    color: #666;
+    margin: 0 0 1rem 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.book-button {
+    background-color: #003087;
+    color: white;
+    border: none;
+    margin-top: 10px;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.book-button:hover {
+    background-color: #002366;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+
+.error {
+    text-align: center;
+    padding: 2rem;
+    color: #e74c3c;
+}
+
+@media (max-width: 768px) {
+    .doctor-grid {
+        grid-template-columns: 1fr;
+    }
+} 

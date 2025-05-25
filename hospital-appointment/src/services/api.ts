@@ -84,6 +84,11 @@ export const authService = {
             // Decode và log token ngay sau khi nhận được
             const decodedToken = decodeJwt(response.data.token.replace('Bearer ', ''));
             console.log('Login - Decoded Token:', decodedToken);
+            console.log('Login - Token payload:', {
+                role: decodedToken?.role,
+                sub: decodedToken?.sub,
+                exp: decodedToken?.exp
+            });
             
             // Lưu role từ token
             if (decodedToken && decodedToken.role) {
@@ -97,6 +102,7 @@ export const authService = {
                                 ...response.data.patient,
                                 role: decodedToken.role
                             };
+                            console.log('User data with role (PATIENT):', userData);
                             localStorage.setItem('user', JSON.stringify(userData));
                         }
                         break;
@@ -106,6 +112,7 @@ export const authService = {
                                 ...response.data.doctorResponse,
                                 role: decodedToken.role
                             };
+                            console.log('User data with role (DOCTOR):', userData);
                             localStorage.setItem('user', JSON.stringify(userData));
                         }
                         break;
@@ -184,6 +191,26 @@ export const specializationService = {
             return response.data;
         } catch (error) {
             console.error('Specialization Service - Get all failed:', error);
+            throw error;
+        }
+    }
+};
+
+export const hospitalService = {
+    async getAllHospitals() {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('Không có token xác thực');
+            }
+            const response = await api.get('/hospital/getAll', {
+                headers: {
+                    Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Hospital Service - Get all failed:', error);
             throw error;
         }
     }

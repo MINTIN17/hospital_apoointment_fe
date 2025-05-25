@@ -12,16 +12,13 @@ const PrivateRoutes: React.FC<PrivateRoutesProps> = ({ children, requireAdmin })
     const [isChecking, setIsChecking] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [redirectPath, setRedirectPath] = useState<string | null>(null);
 
     useEffect(() => {
         const checkAuth = () => {
-            console.log('PrivateRoutes - Starting auth check');
-            console.log('PrivateRoutes - Current path:', location.pathname);
-
             const token = localStorage.getItem('token');
             if (!token) {
-                console.log('PrivateRoutes - No token found');
-                setIsAuthenticated(false);
+                setRedirectPath('/login');
                 setIsChecking(false);
                 return;
             }
@@ -30,13 +27,10 @@ const PrivateRoutes: React.FC<PrivateRoutesProps> = ({ children, requireAdmin })
             if (requireAdmin) {
                 const userData = localStorage.getItem('user');
                 if (userData) {
-                    console.log('PrivateRoutes - User data found, not admin');
-                    setIsAdmin(false);
-                    setIsAuthenticated(false);
+                    setRedirectPath('/home');
                     setIsChecking(false);
                     return;
                 }
-                console.log('PrivateRoutes - No user data, is admin');
                 setIsAdmin(true);
             } else {
                 // Kiểm tra trạng thái enabled cho user thường
@@ -44,45 +38,46 @@ const PrivateRoutes: React.FC<PrivateRoutesProps> = ({ children, requireAdmin })
                 if (userData) {
                     try {
                         const userInfo = JSON.parse(userData);
-                        if (userInfo.user && !userInfo.user.enabled) {
-                            console.log('PrivateRoutes - Account is disabled');
-                            setIsAuthenticated(false);
+                        console.log('User info:', userInfo); // Debug log
+
+                        // Xử lý khác nhau cho từng role
+                        if (userInfo.role === 'PATIENT') {
+                            // Kiểm tra enabled status cho PATIENT
+                            if (userInfo.user && userInfo.user.enabled === false) {
+                                setRedirectPath('/account-disabled');
+                                setIsChecking(false);
+                                return;
+                            }
+                        } else if (userInfo.role === 'DOCTOR') {
+                            // DOCTOR không cần kiểm tra enabled
+                            setIsAuthenticated(true);
                             setIsChecking(false);
                             return;
                         }
                     } catch (error) {
-                        console.error('PrivateRoutes - Error parsing user data:', error);
-                        setIsAuthenticated(false);
+                        console.error('Error parsing user data:', error);
+                        setRedirectPath('/login');
                         setIsChecking(false);
                         return;
                     }
                 }
             }
 
-            console.log('PrivateRoutes - Authentication successful');
             setIsAuthenticated(true);
             setIsChecking(false);
         };
 
         checkAuth();
-    }, [location.pathname, requireAdmin]);
+    }, [requireAdmin]);
 
     if (isChecking) {
-        console.log('PrivateRoutes - Still checking authentication');
         return null;
     }
 
-    if (!isAuthenticated) {
-        console.log('PrivateRoutes - Not authenticated, redirecting to login');
-        return <Navigate to="/login" state={{ from: location }} replace />;
+    if (redirectPath) {
+        return <Navigate to={redirectPath} state={{ from: location }} replace />;
     }
 
-    if (requireAdmin && !isAdmin) {
-        console.log('PrivateRoutes - Not admin, redirecting to home');
-        return <Navigate to="/home" replace />;
-    }
-
-    console.log('PrivateRoutes - Rendering protected route');
     return children ? <>{children}</> : <Outlet />;
 };
 

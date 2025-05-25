@@ -23,6 +23,14 @@ interface Doctor {
     };
 }
 
+interface Schedule {
+    id: number;
+    dayOfWeek: string;
+    startTime: string;
+    endTime: string;
+    available: boolean;
+}
+
 const Doctor: React.FC = () => {
     const navigate = useNavigate();
     const [doctor, setDoctor] = useState<Doctor | null>(null);
@@ -31,57 +39,118 @@ const Doctor: React.FC = () => {
     const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const [showScheduleModal, setShowScheduleModal] = useState(false);
     const [selectedSlots, setSelectedSlots] = useState<{ [key: string]: boolean }>({});
+    const [schedules, setSchedules] = useState<Schedule[]>([]);
+    const [scheduleMap, setScheduleMap] = useState<Map<string, boolean>>(new Map());
 
     // Tạo mảng các ngày trong tuần
-    const weekDays = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+    const weekDays = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
 
     // Tạo mảng các khung giờ
-    const timeSlots = Array.from({ length: 10 }, (_, i) => {
-        const hour = i + 8; // Từ 8h đến 17h
-        return `${hour}:00`;
+    const timeSlots = Array.from({ length: 9 }, (_, i) => {
+        const hour = i + 8; // Từ 8h đến 16h
+        const nextHour = hour + 1;
+        const timeSlot = `${hour}:00-${nextHour}:00`;
+        return timeSlot;
     });
 
     const handleSlotChange = (dayIndex: number, timeIndex: number) => {
-        const key = `${dayIndex}-${timeIndex}`;
-        setSelectedSlots(prev => ({
-            ...prev,
-            [key]: !prev[key]
-        }));
+        const dayOfWeek = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'][dayIndex];
+        const time = timeSlots[timeIndex];
+        const [startTime] = time.split('-');
+        const formattedStartTime = `${parseInt(startTime)}:00:00`;
+        const key = `${dayOfWeek}-${formattedStartTime}`;
+
+        const newScheduleMap = new Map(scheduleMap);
+        newScheduleMap.set(key, !scheduleMap.get(key));
+        setScheduleMap(newScheduleMap);
     };
 
     const handleSelectAllDay = (dayIndex: number) => {
-        const newSelectedSlots = { ...selectedSlots };
-        const allSelected = timeSlots.every((_, timeIndex) => selectedSlots[`${dayIndex}-${timeIndex}`]);
+        const dayOfWeek = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'][dayIndex];
+        const newScheduleMap = new Map(scheduleMap);
 
-        timeSlots.forEach((_, timeIndex) => {
-            const key = `${dayIndex}-${timeIndex}`;
-            newSelectedSlots[key] = !allSelected;
+        // Kiểm tra xem tất cả các khung giờ của ngày đó đã được chọn chưa
+        const allSelected = timeSlots.every(time => {
+            const [startTime] = time.split('-');
+            const formattedStartTime = `${parseInt(startTime)}:00:00`;
+            const key = `${dayOfWeek}-${formattedStartTime}`;
+            return newScheduleMap.get(key);
         });
 
-        setSelectedSlots(newSelectedSlots);
+        // Nếu tất cả đã được chọn thì bỏ chọn tất cả, ngược lại thì chọn tất cả
+        timeSlots.forEach(time => {
+            const [startTime] = time.split('-');
+            const formattedStartTime = `${parseInt(startTime)}:00:00`;
+            const key = `${dayOfWeek}-${formattedStartTime}`;
+            newScheduleMap.set(key, !allSelected);
+        });
+
+        setScheduleMap(newScheduleMap);
     };
 
-    const handleSaveSchedule = () => {
-        // Tạo mảng chứa lịch làm việc đã chọn
-        const scheduleData = weekDays.map((day, dayIndex) => {
-            const daySlots = timeSlots.map(time => {
-                const slotKey = `${dayIndex}-${time}`;
-                return {
-                    time,
-                    isSelected: selectedSlots[slotKey] || false
-                };
-            });
-            return {
-                dayIndex,
-                day,
-                slots: daySlots
-            };
-        });
+    const handleSaveSchedule = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token || !doctor) {
+                showNotification('Vui lòng đăng nhập lại', 'error');
+                return;
+            }
 
-        console.log('Dữ liệu lịch làm việc:', scheduleData);
-        // TODO: Gọi API để lưu lịch làm việc
-        setShowScheduleModal(false);
-        showNotification('Lưu lịch làm việc thành công', 'success');
+            // Tạo mảng chứa các lịch làm việc đã thay đổi
+            const changedSchedules: { id: number; available: boolean }[] = [];
+
+            // Duyệt qua tất cả các lịch hiện tại
+            schedules.forEach(schedule => {
+                const hour = schedule.startTime.split(':')[0];
+                const formattedTime = `${parseInt(hour)}:00:00`;
+                const key = `${schedule.dayOfWeek}-${formattedTime}`;
+                const newAvailable = scheduleMap.get(key) || false;
+
+                // Nếu trạng thái available thay đổi
+                if (schedule.available !== newAvailable) {
+                    changedSchedules.push({
+                        id: schedule.id,
+                        available: newAvailable
+                    });
+                }
+            });
+
+            // Gọi API để cập nhật trạng thái với token trong header
+            const response = await axios.put(
+                'http://localhost:8801/api/schedule/availability',
+                changedSchedules,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            if (response.status === 200) {
+                setShowScheduleModal(false);
+                showNotification('Lưu lịch làm việc thành công', 'success');
+
+                // Refresh lại danh sách lịch với token
+                const updatedSchedules = await axios.get(
+                    `http://localhost:8801/api/schedule/getSchedule?doctor_id=${doctor.id}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+                setSchedules(updatedSchedules.data);
+
+                // Trả về mảng các lịch đã thay đổi
+                return changedSchedules;
+            }
+        } catch (error) {
+            console.error('Error saving schedule:', error);
+            showNotification('Không thể lưu lịch làm việc', 'error');
+            return [];
+        }
     };
 
     useEffect(() => {
@@ -125,6 +194,44 @@ const Doctor: React.FC = () => {
 
         checkAccess();
     }, [navigate]);
+
+    useEffect(() => {
+        const fetchSchedules = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token || !doctor) return;
+
+                const response = await axios.get(
+                    `http://localhost:8801/api/schedule/getSchedule?doctor_id=${doctor.id}`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    }
+                );
+                console.log('Dữ liệu lịch từ API:', response.data);
+                setSchedules(response.data);
+
+                // Tạo Map để lưu trữ lịch
+                const newScheduleMap = new Map();
+                response.data.forEach((schedule: Schedule) => {
+                    const hour = schedule.startTime.split(':')[0];
+                    const formattedTime = `${parseInt(hour)}:00:00`;
+                    const key = `${schedule.dayOfWeek}-${formattedTime}`;
+                    console.log(key);
+                    newScheduleMap.set(key, schedule.available);
+                });
+                setScheduleMap(newScheduleMap);
+            } catch (error) {
+                console.error('Error fetching schedules:', error);
+                showNotification('Không thể tải lịch làm việc', 'error');
+            }
+        };
+
+        if (doctor) {
+            fetchSchedules();
+        }
+    }, [doctor]);
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -228,7 +335,7 @@ const Doctor: React.FC = () => {
                                                 <table className="schedule-table">
                                                     <thead>
                                                         <tr>
-                                                            <th>Giờ</th>
+                                                            <th>Khung giờ</th>
                                                             {weekDays.map((day, index) => (
                                                                 <th key={index}>{day}</th>
                                                             ))}
@@ -237,21 +344,29 @@ const Doctor: React.FC = () => {
                                                     <tbody>
                                                         {timeSlots.map((time, timeIndex) => (
                                                             <tr key={timeIndex}>
-                                                                <td className="time-slot">{time}</td>
-                                                                {weekDays.map((_, dayIndex) => (
-                                                                    <td
-                                                                        key={dayIndex}
-                                                                        className={selectedSlots[`${dayIndex}-${timeIndex}`] ? 'selected' : ''}
-                                                                    >
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            className="schedule-checkbox"
-                                                                            id={`${dayIndex}-${timeIndex}`}
-                                                                            checked={selectedSlots[`${dayIndex}-${timeIndex}`] || false}
-                                                                            onChange={() => handleSlotChange(dayIndex, timeIndex)}
-                                                                        />
-                                                                    </td>
-                                                                ))}
+                                                                <td className="time-slot" style={{ color: 'black' }}>{time}</td>
+                                                                {weekDays.map((_, dayIndex) => {
+                                                                    const dayOfWeek = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'][dayIndex];
+                                                                    const [startTime] = time.split('-');
+                                                                    const formattedStartTime = `${parseInt(startTime)}:00:00`;
+                                                                    const key = `${dayOfWeek}-${formattedStartTime}`;
+                                                                    const isSelected = scheduleMap.get(key) || false;
+
+                                                                    return (
+                                                                        <td
+                                                                            key={dayIndex}
+                                                                            className={isSelected ? 'selected' : ''}
+                                                                        >
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                className="schedule-checkbox"
+                                                                                id={`${dayIndex}-${timeIndex}`}
+                                                                                checked={isSelected}
+                                                                                onChange={() => handleSlotChange(dayIndex, timeIndex)}
+                                                                            />
+                                                                        </td>
+                                                                    );
+                                                                })}
                                                             </tr>
                                                         ))}
                                                         <tr className="select-all-row">

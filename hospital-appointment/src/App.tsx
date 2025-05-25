@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import './styles/App.css';
 import Profile from './pages/Profile';
 import HomePage from './pages/HomePage';
@@ -9,18 +9,12 @@ import PrivateRoutes from './routes/privateRoutes';
 import Admin from './pages/Admin';
 import Doctor from './pages/Doctor';
 import AccountDisabled from './pages/AccountDisabled';
+import HospitalList from './pages/HospitalList';
+import Layout from './components/Layout';
+import DoctorList from './components/DoctorList';
+import DoctorDetail from './pages/DoctorDetail';
 
 const App: React.FC = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.log('App - Location changed:', {
-      pathname: location.pathname,
-      search: location.search,
-      state: location.state
-    });
-  }, [location]);
-
   return (
     <div className="app">
       <Routes>
@@ -43,11 +37,18 @@ const App: React.FC = () => {
           </PrivateRoutes>
         } />
 
-        {/* Regular user routes */}
+        {/* Regular user routes with Layout */}
         <Route element={<PrivateRoutes />}>
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/account-disabled" element={<AccountDisabled />} />
+          <Route element={<Layout />}>
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/hospitals" element={<HospitalList />} />
+            <Route path="/doctorList/:hospitalId/" element={<DoctorList />} />
+            <Route path="/hospitals/:hospitalId/doctors/:doctorId" element={<DoctorDetail />} />
+            <Route path="/introduction" element={<div>Giới thiệu</div>} />
+            <Route path="/diagnosis" element={<div>Chuẩn đoán</div>} />
+            <Route path="/appointment" element={<div>Đặt lịch khám bệnh</div>} />
+          </Route>
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

@@ -71,11 +71,10 @@ const Login: React.FC = () => {
             if (userData) {
                 const userInfo = JSON.parse(userData);
                 console.log('Parsed user info:', userInfo);
-                console.log('User role:', userInfo.role);
 
                 if (userInfo.role === "PATIENT") {
                     // Kiểm tra trạng thái enabled của user
-                    if (!userInfo.enabled) {
+                    if (userInfo.user && userInfo.user.enabled === false) {
                         // Nếu tài khoản bị khóa
                         navigate('/account-disabled', { replace: true });
                     } else {

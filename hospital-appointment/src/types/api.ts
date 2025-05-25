@@ -6,7 +6,6 @@ export interface User {
     dateOfBirth: string;
     avatarUrl: string;
     address: string;
-    role: 'PATIENT' | 'DOCTOR';
     enabled: boolean;
 }
 export interface doctorResponse {
@@ -21,7 +20,6 @@ export interface doctorResponse {
     address: string;
     specialization_name: string;
     hospital_name: string;
-    role: 'PATIENT' | 'DOCTOR';
     yearsOfExperience: number;
     // enabled: boolean;
 }

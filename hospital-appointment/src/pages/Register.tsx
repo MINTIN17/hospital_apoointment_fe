@@ -5,9 +5,13 @@ import { RegisterRequest } from '../types/api';
 import '../styles/Register.css';
 import logoImage from '../assets/logo.png';
 
+interface RegisterFormData extends Omit<RegisterRequest, 'confirmPassword'> {
+    confirmPassword: string;
+}
+
 const Register: React.FC = () => {
     const navigate = useNavigate();
-    const [formData, setFormData] = useState<RegisterRequest>({
+    const [formData, setFormData] = useState<RegisterFormData>({
         name: '',
         email: '',
         password: '',
@@ -15,7 +19,8 @@ const Register: React.FC = () => {
         gender: 'MALE',
         dateOfBirth: '',
         avatarUrl: 'https://res.cloudinary.com/di53bdbjf/image/upload/v1746346822/hospital_appointment/avatar_jam4xb.png',
-        address: ''
+        address: '',
+        confirmPassword: ''
     });
     const [error, setError] = useState('');
     const [activeStep, setActiveStep] = useState(1);
