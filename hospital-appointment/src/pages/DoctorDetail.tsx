@@ -168,11 +168,12 @@ const DoctorDetail: React.FC = () => {
                         )}
                         <div className="form-group">
                             <label>Lý do khám:</label>
-                            <textarea rows={4} placeholder="Nhập lý do khám của bạn..."></textarea>
+                            <textarea rows={4} placeholder="Nhập lý do khám của bạn..." value={reason} onChange={(e) => setReason(e.target.value)}></textarea>
                         </div>
                         <button
                             className="submit-button"
-                            disabled={!selectedDate || !selectedTime}
+                            disabled={!selectedDate || !selectedTime || !reason || !doctorId}
+                            onClick={handleSubmit}
                         >
                             Xác nhận đặt lịch
                         </button>
