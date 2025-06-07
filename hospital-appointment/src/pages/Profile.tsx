@@ -275,67 +275,6 @@ const Profile: React.FC = () => {
 
     return (
         <div className="profile-page">
-            {/* Top Bar */}
-            <div className="top-bar">
-                <div className="top-bar-content">
-                    <div className="contact-info">
-                        <span>📞 1900 6750</span>
-                        <span className="separator">|</span>
-                        <span>✉️ support@sapo.vn</span>
-                    </div>
-                    <div className="user-greeting">
-                        <span>Xin chào, {user.name}!</span>
-                        <button onClick={handleLogout} className="logout-btn">Đăng xuất</button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Navigation */}
-            <nav className="main-nav">
-                <div className="nav-content">
-                    <div className="logo">
-                        <Link to="/home" className="logo-link">
-                            <img src={logoImage} alt="Lofi Pharma" />
-                            <span>Lofi Pharma</span>
-                        </Link>
-                    </div>
-                    <ul className="nav-links">
-                        <li>
-                            <Link
-                                to="/home"
-                                className={location.pathname === '/home' ? 'active' : ''}
-                            >
-                                Trang chủ
-                            </Link>
-                        </li>
-                        <li>
-                            <Link
-                                to="/profile"
-                                className={location.pathname === '/profile' ? 'active' : ''}
-                            >
-                                Hồ sơ
-                            </Link>
-                        </li>
-                        <li>
-                            <Link
-                                to="/appointments"
-                                className={location.pathname === '/appointments' ? 'active' : ''}
-                            >
-                                Lịch khám
-                            </Link>
-                        </li>
-                        <li>
-                            <Link
-                                to="/medical-history"
-                                className={location.pathname === '/medical-history' ? 'active' : ''}
-                            >
-                                Lịch sử khám bệnh
-                            </Link>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-
             {/* Profile Content */}
             <div className="profile-content">
                 {/* Medical Record Header */}

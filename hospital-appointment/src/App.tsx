@@ -13,6 +13,7 @@ import HospitalList from './pages/HospitalList';
 import Layout from './components/Layout';
 import DoctorList from './components/DoctorList';
 import DoctorDetail from './pages/DoctorDetail';
+import PatientHistory from './pages/PatientHistory';
 
 const App: React.FC = () => {
   return (
@@ -38,17 +39,15 @@ const App: React.FC = () => {
         } />
 
         {/* Regular user routes with Layout */}
-        <Route element={<PrivateRoutes />}>
-          <Route element={<Layout />}>
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/hospitals" element={<HospitalList />} />
-            <Route path="/doctorList/:hospitalId/" element={<DoctorList />} />
-            <Route path="/hospitals/:hospitalId/doctors/:doctorId" element={<DoctorDetail />} />
-            <Route path="/introduction" element={<div>Giới thiệu</div>} />
-            <Route path="/diagnosis" element={<div>Chuẩn đoán</div>} />
-            <Route path="/appointment" element={<div>Đặt lịch khám bệnh</div>} />
-          </Route>
+        <Route element={<Layout />}>
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/hospitals" element={<HospitalList />} />
+          <Route path="/doctorList/:hospitalId/" element={<DoctorList />} />
+          <Route path="/hospitals/:hospitalId/doctors/:doctorId" element={<DoctorDetail />} />
+          <Route path="/introduction" element={<div>Giới thiệu</div>} />
+          <Route path="/diagnosis" element={<div>Chuẩn đoán</div>} />
+          <Route path="/history" element={<PatientHistory />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />

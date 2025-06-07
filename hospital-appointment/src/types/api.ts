@@ -1,4 +1,5 @@
 export interface User {
+    id: number;
     name: string;
     email: string;
     phone: string;
@@ -7,7 +8,10 @@ export interface User {
     avatarUrl: string;
     address: string;
     enabled: boolean;
+    role: 'PATIENT' | 'DOCTOR' | 'ADMIN';
+    token?: string;
 }
+
 export interface doctorResponse {
     id: string;
     about: string;
@@ -60,4 +64,59 @@ export interface LoginResponse {
 export interface ApiError {
     message: string;
     status: number;
+}
+
+export interface Appointment {
+    id: number;
+    patient_id: number;
+    doctor_id: number;
+    patient_name: string;
+    doctor_name: string;
+    status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
+    appointmentDate: string;
+    startTime: string;
+    endTime: string;
+    description: string;
+}
+
+export interface Doctor {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+    gender: string;
+    dateOfBirth: string;
+    avatarUrl: string;
+    address: string;
+    about: string;
+    specialization_name: string;
+    yearsOfExperience: number;
+    hospital: {
+        id: number;
+        name: string;
+        address: string;
+    };
+}
+
+export interface Schedule {
+    id: number;
+    dayOfWeek: string;
+    startTime: string;
+    endTime: string;
+    available: boolean;
+}
+
+export interface Hospital {
+    id: number;
+    name: string;
+    address: string;
+    phone: string;
+    email: string;
+    description: string;
+}
+
+export interface Specialization {
+    id: number;
+    name: string;
+    description: string;
 }

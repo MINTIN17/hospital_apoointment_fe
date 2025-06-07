@@ -3,43 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../styles/Doctor.css';
 import logoImage from '../assets/logo.png';
+import { Appointment, Schedule } from '../types/api';
+import type { Doctor } from '../types/api';
 
-interface Doctor {
-    id: number;
-    name: string;
-    email: string;
-    phone: string;
-    gender: string;
-    dateOfBirth: string;
-    avatarUrl: string;
-    address: string;
-    about: string;
-    specialization_name: string;
-    yearsOfExperience: number;
-    hospital: {
-        id: number;
-        name: string;
-        address: string;
-    };
-}
-
-interface Schedule {
-    id: number;
-    dayOfWeek: string;
-    startTime: string;
-    endTime: string;
-    available: boolean;
-}
-
-interface Appointment {
-    id: number;
-    patient_id: number;
-    status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED';
-    appointmentDate: string;
-    startTime: string;
-    endTime: string;
-    description: string;
-}
 
 const Doctor: React.FC = () => {
     const navigate = useNavigate();
@@ -511,6 +477,7 @@ const Doctor: React.FC = () => {
                                     <thead>
                                         <tr>
                                             <th>Thời gian</th>
+                                            <th>Tên bệnh nhân</th>
                                             <th>Lý do khám</th>
                                             <th>Trạng thái</th>
                                             <th>Thao tác</th>
@@ -521,6 +488,9 @@ const Doctor: React.FC = () => {
                                             <tr key={appointment.id}>
                                                 <td>
                                                     {formatDateTime(appointment.appointmentDate, appointment.startTime)}
+                                                </td>
+                                                <td>
+                                                    {appointment.patient_name}
                                                 </td>
                                                 <td>
                                                     {appointment.description}
@@ -818,24 +788,6 @@ const Doctor: React.FC = () => {
 
     return (
         <div className="doctor-page">
-            {/* Top Bar */}
-            <div className="top-bar">
-                <div className="top-bar-content">
-                    <div className="logo">
-                        <img src={logoImage} alt="Lofi Pharma" />
-                        <span>Lofi Pharma</span>
-                    </div>
-                    <div className="user-greeting">
-                        <span>Xin chào, {doctor?.name}!</span>
-                        <button onClick={() => {
-                            localStorage.removeItem('token');
-                            localStorage.removeItem('user');
-                            navigate('/login', { replace: true });
-                        }} className="logout-btn">Đăng xuất</button>
-                    </div>
-                </div>
-            </div>
-
             {/* Doctor Content */}
             <div className="doctor-container">
                 {/* Sidebar */}

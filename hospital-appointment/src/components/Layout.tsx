@@ -79,7 +79,7 @@ const Layout: React.FC = () => {
                         <NavLink to="/introduction" className={({ isActive }) => isActive ? 'active' : ''}>Giới thiệu</NavLink>
                         <NavLink to="/diagnosis" className={({ isActive }) => isActive ? 'active' : ''}>Chuẩn đoán</NavLink>
                         <NavLink to="/hospitals" className={({ isActive }) => isActive ? 'active' : ''}>Danh sách các bệnh viện</NavLink>
-                        <NavLink to="/appointment" className={({ isActive }) => isActive ? 'active' : ''}>Đặt lịch khám bệnh</NavLink>
+                        <NavLink to="/history" className={({ isActive }) => isActive ? 'active' : ''}>Lịch sử khám bệnh</NavLink>
                     </div>
                 </div>
             </nav>
