@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Doctor, getDoctorsByHospital } from '../services/doctorService';
 import axios from '../config/axios';
 import '../styles/DoctorDetail.css';
+import stompClient from '../config/stomp';
 
 interface Schedule {
     id: number;
@@ -20,6 +21,7 @@ const DoctorDetail: React.FC = () => {
     const [selectedDate, setSelectedDate] = useState<string>('');
     const [selectedTime, setSelectedTime] = useState<string>('');
     const [schedules, setSchedules] = useState<Schedule[]>([]);
+    const [reason, setReason] = useState<string>('');
     const navigate = useNavigate();
 
     // Tạo mảng 7 ngày tiếp theo
@@ -29,7 +31,7 @@ const DoctorDetail: React.FC = () => {
         return date;
     });
 
-    // Format date thành string
+    // Format date thành string để hiển thị
     const formatDate = (date: Date) => {
         return date.toLocaleDateString('vi-VN', {
             weekday: 'long',
@@ -77,24 +79,73 @@ const DoctorDetail: React.FC = () => {
         fetchDoctor();
     }, [hospitalId, doctorId]);
 
-    useEffect(() => {
-        const fetchSchedules = async () => {
-            try {
-                if (doctorId) {
-                    const response = await axios.get(`/schedule/getSchedule?doctor_id=${doctorId}`);
-                    console.log(response.data);
-                    setSchedules(response.data);
-                }
-            } catch (err) {
-                console.error('Error fetching schedules:', err);
+    // Tách hàm fetchSchedules ra để có thể tái sử dụng
+    const fetchSchedules = async () => {
+        try {
+            if (doctorId) {
+                const response = await axios.get(`/schedule/getSchedulesWithAvailability?doctor_id=${doctorId}`);
+                console.log(response.data);
+                setSchedules(response.data);
             }
-        };
+        } catch (err) {
+            console.error('Error fetching schedules:', err);
+        }
+    };
 
+    useEffect(() => {
         fetchSchedules();
     }, [doctorId]);
 
+    // Thêm useEffect để xử lý WebSocket
+    useEffect(() => {
+        // Kết nối WebSocket
+        stompClient.onConnect = () => {
+            console.log('Connected to WebSocket');
+            // Subscribe vào topic để nhận thông báo
+            stompClient.subscribe('/topic/slot-booked', (message) => {
+                const data = JSON.parse(message.body);
+                const userStr = localStorage.getItem('user');
+                const user = userStr ? JSON.parse(userStr) : null;
+
+                // Kiểm tra nếu slot đang được chọn bị người khác đặt
+                if (selectedDate && selectedTime && doctorId && user) {
+                    console.log(selectedDate, selectedTime, doctorId, user.id);
+                    console.log(data.doctorId, data.date, data.startTime);
+
+                    const [startTime] = selectedTime.split(' - ');
+
+                    // Chỉ hiển thị thông báo nếu không phải do chính mình đặt
+                    if (
+                        parseInt(doctorId) === data.doctorId &&
+                        selectedDate === data.date &&
+                        startTime === data.startTime.slice(0, 5) &&
+                        user.id !== data.patientId // Thêm kiểm tra patientId
+                    ) {
+                        alert('⚠️ Khung giờ bạn đang chọn đã bị người khác đặt rồi!');
+                        setSelectedTime('');
+                        // Load lại dữ liệu sau khi nhận thông báo
+                        fetchSchedules();
+                    }
+                }
+            });
+        };
+
+        // Kết nối WebSocket
+        stompClient.activate();
+
+        // Cleanup khi component unmount
+        return () => {
+            stompClient.deactivate();
+        };
+    }, [selectedDate, selectedTime, doctorId]);
+
     const handleDateSelect = (date: Date) => {
-        const formattedDate = date.toISOString().split('T')[0];
+        // Format date thành YYYY-MM-DD mà không bị ảnh hưởng bởi múi giờ
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const formattedDate = `${year}-${month}-${day}`;
+
         setSelectedDate(formattedDate);
         setSelectedTime(''); // Reset time khi chọn ngày mới
     };
@@ -112,7 +163,7 @@ const DoctorDetail: React.FC = () => {
         const [year, month, day] = dateStr.split("-").map(Number);
         const date = new Date(year, month - 1, day + 1);
 
-        const dayOfWeek = dayNames[date.getDay()]; // Convert số → tên thứ
+        const dayOfWeek = dayNames[date.getUTCDay()]; // Convert số → tên thứ
         const [startTime] = timeRange.split(" - ");
         console.log(dayOfWeek);
         const schedule = schedules.find(s =>
@@ -121,6 +172,55 @@ const DoctorDetail: React.FC = () => {
         );
 
         return schedule ? schedule.available : false;
+    };
+
+    const handleSubmit = async () => {
+        try {
+            if (!selectedDate || !selectedTime || !reason || !doctorId) {
+                return;
+            }
+
+            const userStr = localStorage.getItem('user');
+            if (!userStr) {
+                alert('Vui lòng đăng nhập để đặt lịch');
+                return;
+            }
+
+            const user = JSON.parse(userStr);
+            const [startTime] = selectedTime.split(' - ');
+            const endTime = selectedTime.split(' - ')[1];
+
+            const appointmentData = {
+                patient_id: user.id,
+                doctor_id: parseInt(doctorId),
+                appointmentDate: selectedDate,
+                startTime: `${startTime}:00`,
+                endTime: `${endTime}:00`,
+                description: reason
+            };
+
+            const response = await axios.post('/appointment/createAppointment', appointmentData);
+
+            if (response.status === 200) {
+                // Gửi thông báo qua WebSocket khi đặt lịch thành công
+                stompClient.publish({
+                    destination: '/app/slot-booked',
+                    body: JSON.stringify({
+                        doctorId: parseInt(doctorId),
+                        date: selectedDate,
+                        startTime: startTime,
+                        message: 'Khung giờ đã được người khác đặt',
+                        // patientId: user.id // Thêm patientId vào message
+                    })
+                });
+
+                alert('Đặt lịch thành công!');
+                navigate(-1); // Navigate back after successful appointment
+            }
+        } catch (error) {
+            console.error('Error creating appointment:', error);
+            alert('Có lỗi xảy ra khi đặt lịch. Vui lòng thử lại sau.');
+        }
     };
 
     if (loading) {
@@ -183,18 +283,25 @@ const DoctorDetail: React.FC = () => {
                 <div className="schedule-section">
                     <h3>Lịch khám 7 ngày tới</h3>
                     <div className="days-grid">
-                        {next7Days.map((date, index) => (
-                            <div
-                                key={index}
-                                className={`day-card ${selectedDate === date.toISOString().split('T')[0] ? 'selected' : ''}`}
-                                onClick={() => handleDateSelect(date)}
-                            >
-                                <div className="day-header">
-                                    {date.toLocaleDateString('vi-VN', { weekday: 'long' }).replace('Thứ', 'Thứ')}, ngày {date.getDate()}
+                        {next7Days.map((date, index) => {
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            const dateString = `${year}-${month}-${day}`;
+
+                            return (
+                                <div
+                                    key={index}
+                                    className={`day-card ${selectedDate === dateString ? 'selected' : ''}`}
+                                    onClick={() => handleDateSelect(date)}
+                                >
+                                    <div className="day-header">
+                                        {date.toLocaleDateString('vi-VN', { weekday: 'long' }).replace('Thứ', 'Thứ')}, ngày {date.getDate()}
+                                    </div>
+                                    <div className="month-name">{date.toLocaleDateString('vi-VN', { month: 'long' })}</div>
                                 </div>
-                                <div className="month-name">{date.toLocaleDateString('vi-VN', { month: 'long' })}</div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     {selectedDate && (
