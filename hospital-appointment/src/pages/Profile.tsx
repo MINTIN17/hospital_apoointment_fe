@@ -85,11 +85,10 @@ const Profile: React.FC = () => {
                 console.log('Invalid date:', dateString);
                 return "Chưa cập nhật";
             }
-            const formattedDate = date.toLocaleDateString('vi-VN', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            const formattedDate = `${day}/${month}/${year}`;
             console.log('Formatted date:', formattedDate);
             return formattedDate;
         } catch (error) {
@@ -117,12 +116,20 @@ const Profile: React.FC = () => {
         setEditingField(field);
         if (field === 'birthDate') {
             setEditValue(parseDate(value));
+        } else if (field === 'gender') {
+            // Chuyển đổi từ tiếng Việt sang giá trị API
+            setEditValue(value === 'Nam' ? 'MALE' : 'FEMALE');
         } else {
             setEditValue(value);
         }
     };
 
-    const handleSave = (field: string) => {
+    const getGenderText = (gender: string | undefined): string => {
+        if (!gender) return "Chưa cập nhật";
+        return gender === 'MALE' ? 'Nam' : 'Nữ';
+    };
+
+    const handleSave = async (field: string) => {
         let valueToSave = editValue;
         if (field === 'birthDate') {
             try {
@@ -140,6 +147,205 @@ const Profile: React.FC = () => {
                 console.error('Error saving date:', error);
             }
         }
+
+        // Nếu đang cập nhật giới tính, sử dụng API đổi giới tính mới
+        if (field === 'gender') {
+            try {
+                const userData = localStorage.getItem('user');
+                if (!userData) {
+                    throw new Error('Không tìm thấy thông tin người dùng');
+                }
+
+                const userInfo = JSON.parse(userData);
+                const response = await axios.put(
+                    `http://localhost:8801/api/patient/changeGender?patient_id=${userInfo.id}&gender=${valueToSave}`,
+                    {},
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                if (response.data === "update gender success") {
+                    // Load lại dữ liệu user
+                    const updatedUserData = {
+                        ...userInfo,
+                        user: {
+                            ...userInfo.user,
+                            gender: valueToSave
+                        }
+                    };
+                    localStorage.setItem('user', JSON.stringify(updatedUserData));
+
+                    // Cập nhật state với dữ liệu mới
+                    setUser({
+                        ...user,
+                        gender: valueToSave
+                    });
+
+                    setEditingField(null);
+                    showNotification('Cập nhật giới tính thành công', 'success');
+                    return;
+                }
+            } catch (error) {
+                console.error('Error changing gender:', error);
+                showNotification('Cập nhật giới tính thất bại', 'error');
+                return;
+            }
+        }
+
+        // Nếu đang cập nhật tên, sử dụng API đổi tên mới
+        if (field === 'name') {
+            try {
+                const userData = localStorage.getItem('user');
+                if (!userData) {
+                    throw new Error('Không tìm thấy thông tin người dùng');
+                }
+
+                const userInfo = JSON.parse(userData);
+                const response = await axios.put(
+                    `http://localhost:8801/api/patient/changeName?patient_id=${userInfo.id}&name=${valueToSave}`,
+                    {},
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                if (response.data === "update name success") {
+                    const updatedUser = { ...user, [field]: valueToSave };
+                    setUser(updatedUser);
+
+                    // Cập nhật localStorage với cấu trúc đúng
+                    const userData = localStorage.getItem('user');
+                    if (userData) {
+                        const userInfo = JSON.parse(userData);
+                        const updatedUserData = {
+                            ...userInfo,
+                            user: {
+                                ...userInfo.user,
+                                name: valueToSave
+                            }
+                        };
+                        localStorage.setItem('user', JSON.stringify(updatedUserData));
+                    }
+
+                    setEditingField(null);
+                    showNotification('Cập nhật tên thành công', 'success');
+                    return;
+                }
+            } catch (error) {
+                console.error('Error changing name:', error);
+                showNotification('Cập nhật tên thất bại', 'error');
+                return;
+            }
+        }
+
+        // Nếu đang cập nhật ngày sinh, sử dụng API đổi ngày sinh mới
+        if (field === 'birthDate') {
+            try {
+                const userData = localStorage.getItem('user');
+                if (!userData) {
+                    throw new Error('Không tìm thấy thông tin người dùng');
+                }
+
+                const userInfo = JSON.parse(userData);
+                // Chuyển đổi định dạng ngày từ dd/mm/yyyy sang yyyy-mm-dd
+                const [day, month, year] = valueToSave.split('/');
+                const formattedDate = `${year}-${month}-${day}`;
+
+                const response = await axios.put(
+                    `http://localhost:8801/api/patient/changeBirthday?patient_id=${userInfo.id}&birthday=${formattedDate}`,
+                    {},
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                if (response.data === "update date of birth success") {
+                    // Load lại dữ liệu user
+                    const updatedUserData = {
+                        ...userInfo,
+                        user: {
+                            ...userInfo.user,
+                            dateOfBirth: formattedDate // Lưu định dạng yyyy-mm-dd
+                        }
+                    };
+                    localStorage.setItem('user', JSON.stringify(updatedUserData));
+
+                    // Cập nhật state với dữ liệu mới
+                    setUser({
+                        ...user,
+                        dateOfBirth: valueToSave // Hiển thị định dạng dd/mm/yyyy
+                    });
+
+                    setEditingField(null);
+                    showNotification('Cập nhật ngày sinh thành công', 'success');
+                    return;
+                }
+            } catch (error) {
+                console.error('Error changing birth date:', error);
+                showNotification('Cập nhật ngày sinh thất bại', 'error');
+                return;
+            }
+        }
+
+        // Nếu đang cập nhật địa chỉ, sử dụng API đổi địa chỉ mới
+        if (field === 'address') {
+            try {
+                const userData = localStorage.getItem('user');
+                if (!userData) {
+                    throw new Error('Không tìm thấy thông tin người dùng');
+                }
+
+                const userInfo = JSON.parse(userData);
+                const response = await axios.put(
+                    `http://localhost:8801/api/patient/changeAddress?patient_id=${userInfo.id}&address=${valueToSave}`,
+                    {},
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                if (response.data === "update address success") {
+                    // Load lại dữ liệu user
+                    const updatedUserData = {
+                        ...userInfo,
+                        user: {
+                            ...userInfo.user,
+                            address: valueToSave
+                        }
+                    };
+                    localStorage.setItem('user', JSON.stringify(updatedUserData));
+
+                    // Cập nhật state với dữ liệu mới
+                    setUser({
+                        ...user,
+                        address: valueToSave
+                    });
+
+                    setEditingField(null);
+                    showNotification('Cập nhật địa chỉ thành công', 'success');
+                    return;
+                }
+            } catch (error) {
+                console.error('Error changing address:', error);
+                showNotification('Cập nhật địa chỉ thất bại', 'error');
+                return;
+            }
+        }
+
+        // Xử lý các trường hợp cập nhật thông tin khác
         const updatedUser = { ...user, [field]: valueToSave };
         console.log('Updated user data:', updatedUser);
         setUser(updatedUser);
@@ -186,23 +392,23 @@ const Profile: React.FC = () => {
             }
 
             // Cập nhật thông tin user
-            const response = await axios.put(
-                `http://localhost:8801/api/patient/update/${patientId}`,
-                {
-                    name: user.name,
-                    email: user.email,
-                    phone: user.phone,
-                    gender: user.gender,
-                    dateOfBirth: user.dateOfBirth,
-                    avatarUrl: user.avatarUrl,
-                    address: user.address
-                },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                }
-            );
+            // const response = await axios.put(
+            //     `http://localhost:8801/api/patient/update/${patientId}`,
+            //     {
+            //         name: user.name,
+            //         email: user.email,
+            //         phone: user.phone,
+            //         gender: user.gender,
+            //         dateOfBirth: user.dateOfBirth,
+            //         avatarUrl: user.avatarUrl,
+            //         address: user.address
+            //     },
+            //     {
+            //         headers: {
+            //             'Authorization': `Bearer ${localStorage.getItem('token')}`
+            //         }
+            //     }
+            // );
 
             // Cập nhật localStorage với thông tin mới
             const updatedUserData = {
@@ -234,7 +440,9 @@ const Profile: React.FC = () => {
     };
 
     const renderField = (field: string, label: string, value: string | number | undefined, isLocked: boolean = false) => {
-        const displayValue = field === 'birthDate' ? formatDate(value as string) : (value || (isLocked ? value : "Chưa cập nhật"));
+        const displayValue = field === 'birthDate' ? formatDate(value as string) :
+            field === 'gender' ? getGenderText(value as string) :
+                (value || (isLocked ? value : "Chưa cập nhật"));
 
         if (editingField === field) {
             return (
@@ -248,6 +456,24 @@ const Profile: React.FC = () => {
                                 onChange={(e) => setEditValue(e.target.value)}
                                 autoFocus
                             />
+                        ) : field === 'gender' ? (
+                            <select
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                style={{
+                                    padding: '8px 12px',
+                                    borderRadius: '4px',
+                                    border: '1px solid #1a237e',
+                                    color: '#000000',
+                                    backgroundColor: 'white',
+                                    minWidth: '150px',
+                                    cursor: 'pointer',
+                                    outline: 'none'
+                                }}
+                            >
+                                <option value="MALE">Nam</option>
+                                <option value="FEMALE">Nữ</option>
+                            </select>
                         ) : (
                             <input
                                 type="text"
@@ -275,6 +501,25 @@ const Profile: React.FC = () => {
 
     return (
         <div className="profile-page">
+            {/* Notification */}
+            {notification && (
+                <div className={`notification ${notification.type}`} style={{
+                    position: 'fixed',
+                    top: '20px',
+                    right: '20px',
+                    height: '50px',
+                    padding: '15px 25px',
+                    borderRadius: '4px',
+                    backgroundColor: notification.type === 'success' ? '#4caf50' : '#f44336',
+                    color: 'white',
+                    zIndex: 1000,
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                    animation: 'slideIn 0.5s ease-out'
+                }}>
+                    {notification.message}
+                </div>
+            )}
+
             {/* Profile Content */}
             <div className="profile-content">
                 {/* Medical Record Header */}

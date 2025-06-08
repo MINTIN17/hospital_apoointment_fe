@@ -513,4 +513,19 @@
         gap: 12px;
         align-items: flex-start;
     }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.notification {
+    animation: slideIn 0.5s ease-out;
 } 
