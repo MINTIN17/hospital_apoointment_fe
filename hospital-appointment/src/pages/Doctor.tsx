@@ -5,7 +5,13 @@ import '../styles/Doctor.css';
 import logoImage from '../assets/logo.png';
 import { Appointment, Schedule } from '../types/api';
 import type { Doctor } from '../types/api';
+import { Calendar, momentLocalizer } from 'react-big-calendar';
+import moment from 'moment';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 
+moment.locale('vi');
+
+const localizer = momentLocalizer(moment);
 
 const Doctor: React.FC = () => {
     const navigate = useNavigate();
@@ -23,6 +29,7 @@ const Doctor: React.FC = () => {
     const [filterStatus, setFilterStatus] = useState('ALL');
     const [currentPage, setCurrentPage] = useState(1);
     const appointmentsPerPage = 5;
+    const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
 
     // Tạo mảng các ngày trong tuần
     const weekDays = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
@@ -378,6 +385,31 @@ const Doctor: React.FC = () => {
         setCurrentPage(1);
     }, [filterDate, filterStatus]);
 
+    const getAppointmentEvents = () => {
+        const events: { title: string; start: Date; end: Date; resourceId: number; allDay: boolean; status: string }[] = [];
+
+        appointments.forEach(appointment => {
+            if (appointment.status === 'CONFIRMED' || appointment.status === 'COMPLETED') {
+                const [year, month, day] = appointment.appointmentDate.split('-').map(Number);
+                const [startHour, startMinute, startSecond] = appointment.startTime.split(':').map(Number);
+                const [endHour, endMinute, endSecond] = appointment.endTime.split(':').map(Number);
+
+                const start = new Date(year, month - 1, day, startHour, startMinute, startSecond);
+                const end = new Date(year, month - 1, day, endHour, endMinute, endSecond);
+
+                events.push({
+                    title: `${appointment.patient_name} - ${getStatusText(appointment.status)}`,
+                    start: start,
+                    end: end,
+                    resourceId: appointment.id,
+                    allDay: false,
+                    status: appointment.status,
+                });
+            }
+        });
+        return events;
+    };
+
     const renderContent = () => {
         switch (activeTab) {
             case 'appointments':
@@ -689,6 +721,42 @@ const Doctor: React.FC = () => {
                                 Đăng ký lịch làm việc
                             </button>
 
+                            {/* Calendar for confirmed/completed appointments */}
+                            <h3 style={{ marginTop: '10px', marginBottom: '10px', color: 'black', textAlign: 'center' }}>Lịch hẹn</h3>
+                            <div style={{ height: 500 }}>
+                                <Calendar
+                                    localizer={localizer}
+                                    events={getAppointmentEvents()}
+                                    startAccessor="start"
+                                    endAccessor="end"
+                                    style={{ height: '100%' }}
+                                    date={currentCalendarDate}
+                                    view='week'
+                                    onNavigate={(newDate) => setCurrentCalendarDate(newDate)}
+                                    onView={(newView) => { /* Keep view as 'week' */ }}
+                                    min={new Date(0, 0, 0, 8, 0, 0)} // Set start time to 8:00
+                                    max={new Date(0, 0, 0, 17, 0, 0)} // Set end time to 17:00
+                                    step={60} // Display slots in 60-minute intervals (hourly)
+                                    timeslots={1} // Show one time slot per step
+                                    // showNowIndicator={true}
+                                    eventPropGetter={(event) => {
+                                        const typedEvent = event as { status: string };
+                                        let classNames = ['rbc-event'];
+                                        if (typedEvent.status) {
+                                            classNames.push(`status-${typedEvent.status}`);
+                                        }
+                                        return {
+                                            className: classNames.join(' '),
+                                        };
+                                    }}
+                                />
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '15px', gap: '10px' }}>
+                                <button onClick={() => setCurrentCalendarDate(moment(currentCalendarDate).subtract(1, 'week').toDate())} className="nav-button">Tuần trước</button>
+                                <button onClick={() => setCurrentCalendarDate(moment(currentCalendarDate).add(1, 'week').toDate())} className="nav-button">Tuần sau</button>
+                            </div>
+
                             {showScheduleModal && (
                                 <div className="modal-overlay">
                                     <div className="schedule-modal">
@@ -756,20 +824,20 @@ const Doctor: React.FC = () => {
                                                     </tbody>
                                                 </table>
                                             </div>
-                                            <div className="modal-footer">
-                                                <button
-                                                    className="cancel-button"
-                                                    onClick={() => setShowScheduleModal(false)}
-                                                >
-                                                    Hủy
-                                                </button>
-                                                <button
-                                                    className="submit-button"
-                                                    onClick={handleSaveSchedule}
-                                                >
-                                                    Lưu lịch
-                                                </button>
-                                            </div>
+                                        </div>
+                                        <div className="modal-footer">
+                                            <button
+                                                className="cancel-button"
+                                                onClick={() => setShowScheduleModal(false)}
+                                            >
+                                                Hủy
+                                            </button>
+                                            <button
+                                                className="submit-button"
+                                                onClick={handleSaveSchedule}
+                                            >
+                                                Lưu lịch
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

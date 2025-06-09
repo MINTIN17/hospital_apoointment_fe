@@ -738,3 +738,37 @@
         width: 100%;
     }
 }
+
+.rbc-event {
+    background-color: #1a237e;
+    color: black;
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-size: 0.85rem;
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.rbc-time-gutter,.rbc-header {
+    color: black !important;
+}
+
+.rbc-toolbar {
+    display: none !important;
+}
+
+.rbc-current-time-indicator {
+    position: absolute;
+    background-color: red;
+    height: 2px;
+    width: 100%;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+}
