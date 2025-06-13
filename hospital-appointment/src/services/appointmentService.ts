@@ -50,5 +50,15 @@ export const appointmentService = {
             console.error('Appointment Service - Get by patient failed:', error);
             throw error;
         }
+    },
+
+    async getAppointmentsByAdmin(): Promise<Appointment[]> {
+        try {
+            const response = await axiosInstance.get(`/appointment/getAllAppointment`);
+            return response.data;
+        } catch (error) {
+            console.error('Appointment Service - Get by patient failed:', error);
+            throw error;
+        }
     }
 }; 

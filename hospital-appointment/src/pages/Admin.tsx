@@ -8,7 +8,8 @@ import { hospitalService } from '../services/hospitalService';
 import { cloudinaryService } from '../services/cloudinaryService';
 import '../styles/Admin.css';
 import logoImage from '../assets/logo.png';
-import { doctorResponse, Patient } from '../types/api';
+import { doctorResponse, Patient, Appointment } from '../types/api';
+import { appointmentService } from '../services/appointmentService';
 
 interface Hospital {
     id: number;
@@ -68,7 +69,16 @@ const Admin: React.FC = () => {
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [patients, setPatients] = useState<Patient[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10);
+    const [itemsPerPage] = useState(6);
+    const [appointmentsPerPage] = useState(6);
+    const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
+    const [appointmentFilters, setAppointmentFilters] = useState({
+        doctor: '',
+        patient: '',
+        date: '',
+        status: ''
+    });
 
     useEffect(() => {
         const checkAccess = () => {
@@ -112,6 +122,41 @@ const Admin: React.FC = () => {
         }
     }, [activeTab]);
 
+    useEffect(() => {
+        fetchAppointments();
+    }, []);
+
+    useEffect(() => {
+        let filtered = appointments;
+
+        if (appointmentFilters.doctor) {
+            filtered = filtered.filter(app =>
+                app.doctor_name.toLowerCase().includes(appointmentFilters.doctor.toLowerCase())
+            );
+        }
+
+        if (appointmentFilters.patient) {
+            filtered = filtered.filter(app =>
+                app.patient_name.toLowerCase().includes(appointmentFilters.patient.toLowerCase())
+            );
+        }
+
+        if (appointmentFilters.date) {
+            filtered = filtered.filter(app =>
+                app.appointmentDate.includes(appointmentFilters.date)
+            );
+        }
+
+        if (appointmentFilters.status) {
+            filtered = filtered.filter(app =>
+                app.status === appointmentFilters.status
+            );
+        }
+
+        setFilteredAppointments(filtered);
+        setCurrentPage(1); // Reset về trang 1 khi filter thay đổi
+    }, [appointments, appointmentFilters]);
+
     const fetchHospitals = async () => {
         try {
             setIsLoading(true);
@@ -134,6 +179,16 @@ const Admin: React.FC = () => {
             showNotification('Không thể tải danh sách bệnh nhân', 'error');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const fetchAppointments = async () => {
+        try {
+            const response = await appointmentService.getAppointmentsByAdmin();
+            setAppointments(response);
+        } catch (error) {
+            console.error('Error fetching appointments:', error);
+            showNotification('Không thể tải danh sách cuộc hẹn', 'error');
         }
     };
 
@@ -460,6 +515,69 @@ const Admin: React.FC = () => {
         );
     };
 
+    // Tính toán số trang và danh sách cuộc hẹn cho trang hiện tại
+    const indexOfLastAppointment = currentPage * appointmentsPerPage;
+    const indexOfFirstAppointment = indexOfLastAppointment - appointmentsPerPage;
+    const currentAppointments = filteredAppointments.slice(indexOfFirstAppointment, indexOfLastAppointment);
+    const totalAppointmentPages = Math.ceil(filteredAppointments.length / appointmentsPerPage);
+
+    const handleAppointmentPageChange = (pageNumber: number) => {
+        setCurrentPage(pageNumber);
+    };
+
+    const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setAppointmentFilters(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const formatDateTime = (date: string, time: string) => {
+        const dateObj = new Date(date);
+        return `${dateObj.toLocaleDateString('vi-VN')} ${time.slice(0, 5)}`;
+    };
+
+    const getStatusText = (status: string) => {
+        switch (status) {
+            case 'PENDING':
+                return 'Chờ xác nhận';
+            case 'CONFIRMED':
+                return 'Đã xác nhận';
+            case 'CANCELLED':
+                return 'Đã hủy';
+            case 'COMPLETED':
+                return 'Đã hoàn thành';
+            default:
+                return status;
+        }
+    };
+
+    const handleAppointmentStatus = async (appointmentId: number, newStatus: 'CONFIRMED' | 'CANCELLED' | 'COMPLETED') => {
+        try {
+            let successMessage = '';
+            switch (newStatus) {
+                case 'CONFIRMED':
+                    await appointmentService.confirmAppointment(appointmentId);
+                    successMessage = 'Đã xác nhận cuộc hẹn';
+                    break;
+                case 'CANCELLED':
+                    await appointmentService.cancelAppointment(appointmentId);
+                    successMessage = 'Đã hủy cuộc hẹn';
+                    break;
+                case 'COMPLETED':
+                    await appointmentService.completeAppointment(appointmentId);
+                    successMessage = 'Đã hoàn thành cuộc hẹn';
+                    break;
+            }
+            showNotification(successMessage, 'success');
+            fetchAppointments();
+        } catch (error) {
+            console.error('Error updating appointment status:', error);
+            showNotification('Có lỗi xảy ra khi cập nhật trạng thái cuộc hẹn', 'error');
+        }
+    };
+
     const renderContent = () => {
         switch (activeTab) {
             case 'patients':
@@ -478,7 +596,6 @@ const Admin: React.FC = () => {
                                             <thead>
                                                 <tr>
                                                     <th>ID</th>
-                                                    <th>Ảnh</th>
                                                     <th>Họ và tên</th>
                                                     <th>Email</th>
                                                     <th>Số điện thoại</th>
@@ -493,13 +610,6 @@ const Admin: React.FC = () => {
                                                 {currentPatients.map((patient) => (
                                                     <tr key={patient.id}>
                                                         <td>{patient.id}</td>
-                                                        <td>
-                                                            <img
-                                                                src={patient.user.avatarUrl}
-                                                                alt={patient.user.name}
-                                                                className="patient-avatar"
-                                                            />
-                                                        </td>
                                                         <td>{patient.user.name}</td>
                                                         <td>{patient.user.email}</td>
                                                         <td>{patient.user.phone}</td>
@@ -575,7 +685,107 @@ const Admin: React.FC = () => {
                     </div>
                 );
             case 'appointments':
-                return <div className="admin-content">Quản lý cuộc hẹn</div>;
+                return (
+                    <div className="appointments-section" style={{ padding: '0px' }}>
+                        <h2>Quản lý cuộc hẹn</h2>
+                        <div className="appointments-filters">
+                            <div className="filter-group">
+                                <input
+                                    type="text"
+                                    name="doctor"
+                                    placeholder="Tìm theo tên bác sĩ"
+                                    value={appointmentFilters.doctor}
+                                    onChange={handleFilterChange}
+                                />
+                            </div>
+                            <div className="filter-group">
+                                <input
+                                    type="text"
+                                    name="patient"
+                                    placeholder="Tìm theo tên bệnh nhân"
+                                    value={appointmentFilters.patient}
+                                    onChange={handleFilterChange}
+                                />
+                            </div>
+                            <div className="filter-group">
+                                <input
+                                    type="date"
+                                    name="date"
+                                    value={appointmentFilters.date}
+                                    onChange={handleFilterChange}
+                                />
+                            </div>
+                            <div className="filter-group">
+                                <select
+                                    name="status"
+                                    value={appointmentFilters.status}
+                                    onChange={handleFilterChange}
+                                >
+                                    <option value="">Tất cả trạng thái</option>
+                                    <option value="PENDING">Chờ xác nhận</option>
+                                    <option value="CONFIRMED">Đã xác nhận</option>
+                                    <option value="CANCELLED">Đã hủy</option>
+                                    <option value="COMPLETED">Đã hoàn thành</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="appointments-table-container">
+                            <table className="appointments-table">
+                                <thead>
+                                    <tr>
+                                        <th>Thời gian</th>
+                                        <th>Bác sĩ</th>
+                                        <th>Bệnh nhân</th>
+                                        <th>Lý do khám</th>
+                                        <th>Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {currentAppointments.map((appointment: Appointment) => (
+                                        <tr key={appointment.id}>
+                                            <td>{formatDateTime(appointment.appointmentDate, appointment.startTime)}</td>
+                                            <td>{appointment.doctor_name}</td>
+                                            <td>{appointment.patient_name}</td>
+                                            <td>{appointment.description}</td>
+                                            <td>
+                                                <span className={`status-badge status-${appointment.status.toLowerCase()}`}>
+                                                    {getStatusText(appointment.status)}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        {totalAppointmentPages > 1 && (
+                            <div className="pagination">
+                                <button
+                                    className="pagination-button"
+                                    onClick={() => handleAppointmentPageChange(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                >
+                                    &laquo;
+                                </button>
+                                {Array.from({ length: totalAppointmentPages }, (_, i) => i + 1).map((number) => (
+                                    <button
+                                        key={number}
+                                        className={`pagination-button ${currentPage === number ? 'active' : ''}`}
+                                        onClick={() => handleAppointmentPageChange(number)}
+                                    >
+                                        {number}
+                                    </button>
+                                ))}
+                                <button
+                                    className="pagination-button"
+                                    onClick={() => handleAppointmentPageChange(currentPage + 1)}
+                                    disabled={currentPage === totalAppointmentPages}
+                                >
+                                    &raquo;
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                );
             case 'statistics':
                 return <div className="admin-content">Thống kê</div>;
             default:
