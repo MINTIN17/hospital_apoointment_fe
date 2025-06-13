@@ -106,20 +106,42 @@ const Doctor: React.FC = () => {
             });
 
             // Gọi service để cập nhật trạng thái
-            await scheduleService.updateAvailability(changedSchedules);
-            setShowScheduleModal(false);
-            showNotification('Lưu lịch làm việc thành công', 'success');
+            const response = await scheduleService.updateAvailability(changedSchedules);
 
-            // Refresh lại danh sách lịch
-            const updatedSchedules = await scheduleService.getSchedule(doctor.id);
-            setSchedules(updatedSchedules);
-
-            // Trả về mảng các lịch đã thay đổi
-            return changedSchedules;
-        } catch (error) {
+            if (response === "Update success") {
+                setShowScheduleModal(false);
+                showNotification('Lưu lịch làm việc thành công', 'success');
+                // Refresh lại danh sách lịch
+                const updatedSchedules = await scheduleService.getSchedule(doctor.id);
+                setSchedules(updatedSchedules);
+            } else if (response === "Conflict schedule") {
+                showNotification('Có lịch hẹn đang chờ xác nhận hoặc đã được hẹn', 'error');
+                // Khôi phục lại trạng thái cũ của các ô đã chọn
+                const oldScheduleMap = new Map(scheduleMap);
+                schedules.forEach(schedule => {
+                    const hour = schedule.startTime.split(':')[0];
+                    const formattedTime = `${parseInt(hour)}:00:00`;
+                    const key = `${schedule.dayOfWeek}-${formattedTime}`;
+                    oldScheduleMap.set(key, schedule.available);
+                });
+                setScheduleMap(oldScheduleMap);
+            }
+        } catch (error: any) {
             console.error('Error saving schedule:', error);
-            showNotification('Không thể lưu lịch làm việc', 'error');
-            return [];
+            if (error.response?.data === "Conflict schedule") {
+                showNotification('Có lịch hẹn đang chờ xác nhận hoặc đã được hẹn', 'error');
+                // Khôi phục lại trạng thái cũ của các ô đã chọn
+                const oldScheduleMap = new Map(scheduleMap);
+                schedules.forEach(schedule => {
+                    const hour = schedule.startTime.split(':')[0];
+                    const formattedTime = `${parseInt(hour)}:00:00`;
+                    const key = `${schedule.dayOfWeek}-${formattedTime}`;
+                    oldScheduleMap.set(key, schedule.available);
+                });
+                setScheduleMap(oldScheduleMap);
+            } else {
+                showNotification('Có lỗi xảy ra khi cập nhật lịch làm việc', 'error');
+            }
         }
     };
 

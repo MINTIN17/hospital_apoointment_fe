@@ -62,7 +62,14 @@ const DoctorDetail: React.FC = () => {
             try {
                 if (hospitalId) {
                     const doctors = await doctorService.getDoctorsByHospital(parseInt(hospitalId));
-                    const foundDoctor = doctors.find(d => d.id === doctorId);
+                    // console.log('Danh sách bác sĩ:', doctors);
+                    // console.log('ID bác sĩ cần tìm:', doctorId);
+
+                    // Chuyển đổi doctorId sang number để so sánh
+                    const doctorIdNum = parseInt(doctorId || '0');
+                    const foundDoctor = doctors.find(d => d.id === doctorIdNum);
+
+                    console.log('Bác sĩ tìm thấy:', foundDoctor);
                     if (foundDoctor) {
                         setDoctor(foundDoctor);
                     } else {
@@ -110,9 +117,6 @@ const DoctorDetail: React.FC = () => {
 
                 // Kiểm tra nếu slot đang được chọn bị người khác đặt
                 if (selectedDate && selectedTime && doctorId && user) {
-                    console.log(selectedDate, selectedTime, doctorId, user.id);
-                    console.log(data.doctorId, data.date, data.startTime);
-
                     const [startTime] = selectedTime.split(' - ');
 
                     // Chỉ hiển thị thông báo nếu không phải do chính mình đặt
@@ -120,13 +124,18 @@ const DoctorDetail: React.FC = () => {
                         parseInt(doctorId) === data.doctorId &&
                         selectedDate === data.date &&
                         startTime === data.startTime.slice(0, 5) &&
-                        user.id !== data.patientId // Thêm kiểm tra patientId
+                        user.id !== data.patientId
                     ) {
                         alert('⚠️ Khung giờ bạn đang chọn đã bị người khác đặt rồi!');
                         setSelectedTime('');
                         // Load lại dữ liệu sau khi nhận thông báo
                         fetchSchedules();
                     }
+                }
+
+                // Cập nhật lại danh sách lịch khi có người đặt
+                if (parseInt(doctorId || '0') === data.doctorId) {
+                    fetchSchedules();
                 }
             });
         };
@@ -154,6 +163,19 @@ const DoctorDetail: React.FC = () => {
     const handleTimeSelect = (time: string) => {
         // Kiểm tra lại một lần nữa trước khi cho phép chọn
         if (selectedDate && isTimeSlotAvailable(selectedDate, time)) {
+            // Kiểm tra xem khung giờ này có bị người khác đặt không
+            const [startTime] = time.split(' - ');
+            const isBooked = schedules.some(s =>
+                s.dayOfWeek === getDayOfWeek(new Date(selectedDate)) &&
+                s.startTime.startsWith(startTime) &&
+                !s.available
+            );
+
+            if (isBooked) {
+                alert('⚠️ Khung giờ này đã được người khác đặt!');
+                return;
+            }
+
             setSelectedTime(time);
         }
     };
@@ -166,12 +188,13 @@ const DoctorDetail: React.FC = () => {
 
         const dayOfWeek = dayNames[date.getUTCDay()]; // Convert số → tên thứ
         const [startTime] = timeRange.split(" - ");
-        console.log(dayOfWeek);
+
         const schedule = schedules.find(s =>
             s.dayOfWeek === dayOfWeek &&
             s.startTime.startsWith(startTime)
         );
 
+        // Không chỉ kiểm tra available mà còn kiểm tra xem có bị người khác đặt không
         return schedule ? schedule.available : false;
     };
 

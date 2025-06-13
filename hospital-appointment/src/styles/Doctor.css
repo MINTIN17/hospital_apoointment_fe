@@ -183,7 +183,6 @@
 
 /* Schedule Styles */
 .schedule-container {
-    padding: 20px;
     background: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -581,10 +580,24 @@
 }
 
 .appointments-section h2 {
-    color: #000;
-    margin-bottom: 24px;
     font-size: 24px;
-    font-weight: 700;
+    color: #1a237e;
+    margin: 0;
+}
+
+.appointments-section .add-button {
+    padding: 8px 16px;
+    background-color: #1a237e;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.appointments-section .add-button:hover {
+    background-color: #283593;
 }
 
 .appointments-table-container {

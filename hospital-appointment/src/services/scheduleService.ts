@@ -12,7 +12,7 @@ export const scheduleService = {
         }
     },
 
-    updateAvailability: async (schedules: { id: number; available: boolean }[]): Promise<Schedule[]> => {
+    updateAvailability: async (schedules: { id: number; available: boolean }[]): Promise<String> => {
         try {
             const response = await axiosInstance.put('/schedule/availability', schedules);
             return response.data;
