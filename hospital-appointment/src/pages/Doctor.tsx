@@ -613,7 +613,7 @@ const Doctor: React.FC = () => {
                                     </div>
                                     <div className="profile-name">
                                         <h3>{doctor?.name}</h3>
-                                        <p className="specialization">{doctor?.specialization_name}</p>
+                                        <p className="specialization">Chuyên khoa: {doctor?.specialization_name}</p>
                                     </div>
                                 </div>
                                 <div className="profile-details">
@@ -662,15 +662,18 @@ const Doctor: React.FC = () => {
                 return (
                     <div className="doctor-main">
                         <div className="schedule-container">
-                            <button
-                                className="schedule-button"
-                                onClick={() => setShowScheduleModal(true)}
-                            >
-                                Đăng ký lịch làm việc
-                            </button>
+                            <div style={{maxHeight: '50px', display: 'flex', marginBottom: '10px'}}>
+                                <button
+                                    className="schedule-button"
+                                    onClick={() => setShowScheduleModal(true)}
+                                >
+                                    Đăng ký lịch làm việc
+                                </button>
 
-                            {/* Calendar for confirmed/completed appointments */}
-                            <h3 style={{ marginTop: '10px', marginBottom: '10px', color: 'black', textAlign: 'center' }}>Lịch hẹn</h3>
+                                {/* Calendar for confirmed/completed appointments */}
+                                <h3 style={{ marginTop: '10px',maxWidth: '300px',marginLeft: '200px', marginBottom: '10px', color: 'black', textAlign: 'center' }}>Lịch hẹn</h3>
+                            </div>
+                            
                             <div style={{ height: 500 }}>
                                 <Calendar
                                     localizer={localizer}
@@ -700,7 +703,7 @@ const Doctor: React.FC = () => {
                                 />
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '15px', gap: '10px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '5px', gap: '10px' }}>
                                 <button onClick={() => setCurrentCalendarDate(moment(currentCalendarDate).subtract(1, 'week').toDate())} className="nav-button">Tuần trước</button>
                                 <button onClick={() => setCurrentCalendarDate(moment(currentCalendarDate).add(1, 'week').toDate())} className="nav-button">Tuần sau</button>
                             </div>

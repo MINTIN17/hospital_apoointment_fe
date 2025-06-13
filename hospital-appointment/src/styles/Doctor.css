@@ -185,7 +185,7 @@
 .schedule-container {
     background: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
 }
 
 .schedule-container h2 {
@@ -293,10 +293,9 @@
 
 /* Profile Styles */
 .profile-container {
-    padding: 20px;
     background: #fff;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); */
 }
 
 .profile-container h2 {
@@ -305,6 +304,7 @@
 }
 
 .profile-info {
+    padding: 0px 20px;
     max-width: 800px;
 }
 
@@ -456,7 +456,7 @@
 }
 
 .modal-body {
-    padding: 20px;
+    padding: 0 20px;
 }
 
 .schedule-table-container {
@@ -523,6 +523,7 @@
 }
 
 .modal-footer {
+    margin-top: 0px;
     padding: 20px;
     border-top: 1px solid #eee;
     display: flex;
@@ -546,6 +547,7 @@
 
 .modal-footer .submit-button {
     padding: 8px 16px;
+    max-width: 100px;
     border: none;
     border-radius: 4px;
     background-color: #1a237e;
@@ -784,4 +786,8 @@
     z-index: 1000;
     top: 0;
     left: 0;
+}
+
+.nav-button{
+    padding: 5px 15px;
 }
