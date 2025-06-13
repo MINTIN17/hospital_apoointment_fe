@@ -10,6 +10,68 @@
     text-align: center;
 }
 
+.search-filter-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    align-items: center;
+}
+
+.search-input-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+.search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    font-size: 1.2rem;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.8rem 1.2rem 0.8rem 3rem;
+    font-size: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.2s ease;
+    background-color: #f8f9fa;
+    color: #666;
+}
+
+.search-input:focus {
+    border-color: #1a237e;
+    box-shadow: 0 0 0 2px rgba(26, 35, 126, 0.2);
+    background-color: #fff;
+}
+
+.search-input::placeholder {
+    color: #999;
+}
+
+.specialization-select {
+    padding: 0.8rem 1.2rem;
+    font-size: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.2s ease;
+    background-color: #f8f9fa;
+    color: #666;
+    min-width: 200px;
+    cursor: pointer;
+}
+
+.specialization-select:focus {
+    border-color: #1a237e;
+    box-shadow: 0 0 0 2px rgba(26, 35, 126, 0.2);
+    background-color: #fff;
+}
+
 .doctor-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));

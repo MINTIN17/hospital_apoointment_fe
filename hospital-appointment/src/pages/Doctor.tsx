@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { appointmentService } from '../services/appointmentService';
+import { scheduleService } from '../services/scheduleService';
 import '../styles/Doctor.css';
 import logoImage from '../assets/logo.png';
 import { Appointment, Schedule } from '../types/api';
@@ -79,8 +81,7 @@ const Doctor: React.FC = () => {
 
     const handleSaveSchedule = async () => {
         try {
-            const token = localStorage.getItem('token');
-            if (!token || !doctor) {
+            if (!doctor) {
                 showNotification('Vui lòng đăng nhập lại', 'error');
                 return;
             }
@@ -104,37 +105,17 @@ const Doctor: React.FC = () => {
                 }
             });
 
-            // Gọi API để cập nhật trạng thái với token trong header
-            const response = await axios.put(
-                'http://localhost:8801/api/schedule/availability',
-                changedSchedules,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
+            // Gọi service để cập nhật trạng thái
+            await scheduleService.updateAvailability(changedSchedules);
+            setShowScheduleModal(false);
+            showNotification('Lưu lịch làm việc thành công', 'success');
 
-            if (response.status === 200) {
-                setShowScheduleModal(false);
-                showNotification('Lưu lịch làm việc thành công', 'success');
+            // Refresh lại danh sách lịch
+            const updatedSchedules = await scheduleService.getSchedule(doctor.id);
+            setSchedules(updatedSchedules);
 
-                // Refresh lại danh sách lịch với token
-                const updatedSchedules = await axios.get(
-                    `http://localhost:8801/api/schedule/getSchedule?doctor_id=${doctor.id}`,
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    }
-                );
-                setSchedules(updatedSchedules.data);
-
-                // Trả về mảng các lịch đã thay đổi
-                return changedSchedules;
-            }
+            // Trả về mảng các lịch đã thay đổi
+            return changedSchedules;
         } catch (error) {
             console.error('Error saving schedule:', error);
             showNotification('Không thể lưu lịch làm việc', 'error');
@@ -145,9 +126,8 @@ const Doctor: React.FC = () => {
     // Hàm lấy danh sách cuộc hẹn của bác sĩ
     const fetchDoctorAppointments = async () => {
         try {
-            const token = localStorage.getItem('token');
             const userStr = localStorage.getItem('user');
-            if (!token || !userStr) {
+            if (!userStr) {
                 console.log('Không tìm thấy thông tin người dùng');
                 return;
             }
@@ -158,14 +138,8 @@ const Doctor: React.FC = () => {
                 return;
             }
 
-            const response = await axios.get(`http://localhost:8801/api/appointment/getDoctorAppointment?doctor_id=${user.id}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            console.log('Doctor appointments:', response.data);
-            setAppointments(response.data);
+            const appointments = await appointmentService.getAppointmentsByDoctor(user.id);
+            setAppointments(appointments);
         } catch (err) {
             console.error('Error fetching doctor appointments:', err);
             showNotification('Không thể tải danh sách cuộc hẹn', 'error');
@@ -217,27 +191,17 @@ const Doctor: React.FC = () => {
     useEffect(() => {
         const fetchSchedules = async () => {
             try {
-                const token = localStorage.getItem('token');
-                if (!token || !doctor) return;
+                if (!doctor) return;
 
-                const response = await axios.get(
-                    `http://localhost:8801/api/schedule/getSchedule?doctor_id=${doctor.id}`,
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    }
-                );
-                console.log('Dữ liệu lịch từ API:', response.data);
-                setSchedules(response.data);
+                const schedules = await scheduleService.getSchedule(doctor.id);
+                setSchedules(schedules);
 
                 // Tạo Map để lưu trữ lịch
                 const newScheduleMap = new Map();
-                response.data.forEach((schedule: Schedule) => {
+                schedules.forEach((schedule: Schedule) => {
                     const hour = schedule.startTime.split(':')[0];
                     const formattedTime = `${parseInt(hour)}:00:00`;
                     const key = `${schedule.dayOfWeek}-${formattedTime}`;
-                    console.log(key);
                     newScheduleMap.set(key, schedule.available);
                 });
                 setScheduleMap(newScheduleMap);
@@ -260,64 +224,26 @@ const Doctor: React.FC = () => {
     // Hàm xử lý thay đổi trạng thái cuộc hẹn
     const handleAppointmentStatus = async (appointmentId: number, newStatus: 'CONFIRMED' | 'CANCELLED' | 'COMPLETED') => {
         try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                showNotification('Vui lòng đăng nhập lại', 'error');
-                return;
-            }
-
-            let response;
             let successMessage = '';
             switch (newStatus) {
                 case 'CONFIRMED':
-                    response = await axios.put(
-                        `http://localhost:8801/api/appointment/confirmAppointment?appointment_id=${appointmentId}`,
-                        {},
-                        {
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            }
-                        }
-                    );
+                    await appointmentService.confirmAppointment(appointmentId);
                     successMessage = 'Đã xác nhận cuộc hẹn';
                     break;
                 case 'CANCELLED':
-                    response = await axios.put(
-                        `http://localhost:8801/api/appointment/cancelAppointment?appointment_id=${appointmentId}`,
-                        {},
-                        {
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            }
-                        }
-                    );
+                    await appointmentService.cancelAppointment(appointmentId);
                     successMessage = 'Đã hủy cuộc hẹn';
                     break;
                 case 'COMPLETED':
-                    response = await axios.put(
-                        `http://localhost:8801/api/appointment/completeAppointment?appointment_id=${appointmentId}`,
-                        {},
-                        {
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            }
-                        }
-                    );
+                    await appointmentService.completeAppointment(appointmentId);
                     successMessage = 'Đã hoàn thành cuộc hẹn';
                     break;
             }
-
-            if (response.status === 200) {
-                showNotification(successMessage, 'success');
-                // Load lại danh sách cuộc hẹn
-                fetchDoctorAppointments();
-            }
+            showNotification(successMessage, 'success');
+            fetchDoctorAppointments();
         } catch (error) {
             console.error('Error updating appointment status:', error);
-            showNotification('Không thể cập nhật trạng thái', 'error');
+            showNotification('Có lỗi xảy ra khi cập nhật trạng thái cuộc hẹn', 'error');
         }
     };
 
@@ -853,10 +779,28 @@ const Doctor: React.FC = () => {
     if (isLoading) {
         return <div className="loading">Đang tải...</div>;
     }
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/login', { replace: true });
+    };
 
     return (
         <div className="doctor-page">
             {/* Doctor Content */}
+            {/* Top Bar */}
+            <div className="top-bar">
+                <div className="top-bar-content">
+                    <div className="logo">
+                        <img src={logoImage} alt="Lofi Pharma" />
+                        <span>Lofi Pharma</span>
+                    </div>
+                    <div className="user-greeting">
+                        <span>Xin chào, bác sĩ {doctor?.name}</span>
+                        <button onClick={handleLogout} className="logout-btn">Đăng xuất</button>
+                    </div>
+                </div>
+            </div>
             <div className="doctor-container">
                 {/* Sidebar */}
                 <div className="doctor-sidebar">

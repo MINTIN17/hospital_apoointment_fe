@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Doctor, getDoctorsByHospital } from '../services/doctorService';
+import { doctorService } from '../services/doctorService';
 import axios from '../config/axios';
 import '../styles/DoctorDetail.css';
 import stompClient from '../config/stomp';
+import { doctorResponse } from '../types/api';
 
 interface Schedule {
     id: number;
@@ -15,7 +16,7 @@ interface Schedule {
 
 const DoctorDetail: React.FC = () => {
     const { hospitalId, doctorId } = useParams<{ hospitalId: string; doctorId: string }>();
-    const [doctor, setDoctor] = useState<Doctor | null>(null);
+    const [doctor, setDoctor] = useState<doctorResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedDate, setSelectedDate] = useState<string>('');
@@ -60,8 +61,8 @@ const DoctorDetail: React.FC = () => {
         const fetchDoctor = async () => {
             try {
                 if (hospitalId) {
-                    const doctors = await getDoctorsByHospital(parseInt(hospitalId));
-                    const foundDoctor = doctors.find(d => d.id === parseInt(doctorId || '0'));
+                    const doctors = await doctorService.getDoctorsByHospital(parseInt(hospitalId));
+                    const foundDoctor = doctors.find(d => d.id === doctorId);
                     if (foundDoctor) {
                         setDoctor(foundDoctor);
                     } else {

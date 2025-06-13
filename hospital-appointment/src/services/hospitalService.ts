@@ -28,5 +28,15 @@ export const hospitalService = {
             console.error(`Error fetching hospital with id ${id}:`, error);
             throw error;
         }
+    },
+
+    addHospital: async (hospitalData: Omit<Hospital, 'id' | 'rating'>): Promise<Hospital> => {
+        try {
+            const response = await axiosInstance.post('/hospital/add', hospitalData);
+            return response.data;
+        } catch (error) {
+            console.error('Error adding hospital:', error);
+            throw error;
+        }
     }
 }; 

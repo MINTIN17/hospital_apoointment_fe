@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/HospitalList.css';
 import { hospitalService, Hospital } from '../services/hospitalService';
+import { FaSearch } from 'react-icons/fa';
 
 const HospitalList: React.FC = () => {
     const [hospitals, setHospitals] = useState<Hospital[]>([]);
+    const [filteredHospitals, setFilteredHospitals] = useState<Hospital[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
@@ -15,6 +18,7 @@ const HospitalList: React.FC = () => {
                 const data = await hospitalService.getAllHospitals();
                 console.log(data);
                 setHospitals(data);
+                setFilteredHospitals(data);
                 setError(null);
             } catch (err) {
                 setError('Không thể tải danh sách bệnh viện. Vui lòng thử lại sau.');
@@ -26,6 +30,13 @@ const HospitalList: React.FC = () => {
 
         fetchHospitals();
     }, []);
+
+    useEffect(() => {
+        const filtered = hospitals.filter(hospital =>
+            hospital.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setFilteredHospitals(filtered);
+    }, [searchTerm, hospitals]);
 
     const handleBookAppointment = (hospitalId: number) => {
         navigate(`/doctorList/${hospitalId}`);
@@ -42,8 +53,20 @@ const HospitalList: React.FC = () => {
     return (
         <div className="hospital-list-container">
             <h1 className="page-title">Danh sách bệnh viện</h1>
+            <div className="search-container">
+                <div className="search-input-wrapper">
+                    <FaSearch className="search-icon" />
+                    <input
+                        type="text"
+                        placeholder="Tìm kiếm bệnh viện..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="search-input"
+                    />
+                </div>
+            </div>
             <div className="hospital-grid">
-                {hospitals.map((hospital) => (
+                {filteredHospitals.map((hospital) => (
                     <div key={hospital.id} className="hospital-card">
                         <div className="hospital-image">
                             <img src={hospital.avatarUrl} alt={hospital.name} />
@@ -66,7 +89,7 @@ const HospitalList: React.FC = () => {
                                 <i className="fas fa-map-marker-alt"></i> {hospital.address}
                             </p>
                             <p className="hospital-phone">
-                                    Số điện thoại:
+                                Số điện thoại:
                                 <i className="fas fa-phone"></i> {hospital.phone}
                             </p>
                             <button

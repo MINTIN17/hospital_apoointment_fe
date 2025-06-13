@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { specializationService } from '../services/api';
+import { patientService } from '../services/patientService'
+import { doctorService } from '../services/doctorService';
+import { specializationService } from '../services/specializationService';
+import { hospitalService } from '../services/hospitalService';
+import { cloudinaryService } from '../services/cloudinaryService';
 import '../styles/Admin.css';
 import logoImage from '../assets/logo.png';
+import { doctorResponse, Patient } from '../types/api';
 
 interface Hospital {
     id: number;
@@ -19,34 +24,6 @@ interface Specialization {
     description: string;
 }
 
-interface Doctor {
-    id: number;
-    name: string;
-    specialization_name: string;
-    dateOfBirth: string;
-    about: string;
-    gender: string;
-    avatarUrl: string;
-    yearsOfExperience: string;
-    email: string;
-    phone: string;
-    address: string;
-}
-
-interface Patient {
-    id: number;
-    user: {
-        name: string;
-        email: string;
-        phone: string;
-        gender: string;
-        dateOfBirth: string;
-        avatarUrl: string;
-        address: string;
-        enabled: boolean;
-    }
-}
-
 const Admin: React.FC = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('patients');
@@ -54,7 +31,7 @@ const Admin: React.FC = () => {
     const [showHospitalDetailModal, setShowHospitalDetailModal] = useState(false);
     const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
     const [specializations, setSpecializations] = useState<Specialization[]>([]);
-    const [doctors, setDoctors] = useState<Doctor[]>([]);
+    const [doctors, setDoctors] = useState<doctorResponse[]>([]);
     const [hospitals, setHospitals] = useState<Hospital[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hospitalForm, setHospitalForm] = useState({
@@ -86,7 +63,7 @@ const Admin: React.FC = () => {
     const [doctorSearchTerm, setDoctorSearchTerm] = useState('');
     const [selectedSpecialization, setSelectedSpecialization] = useState('');
     const [filteredSpecializations, setFilteredSpecializations] = useState<Specialization[]>([]);
-    const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
+    const [filteredDoctors, setFilteredDoctors] = useState<doctorResponse[]>([]);
     const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [patients, setPatients] = useState<Patient[]>([]);
@@ -138,13 +115,8 @@ const Admin: React.FC = () => {
     const fetchHospitals = async () => {
         try {
             setIsLoading(true);
-            const token = localStorage.getItem('token');
-            const response = await axios.get('http://localhost:8801/api/hospital/getAllHospital', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            setHospitals(response.data);
+            const response = await hospitalService.getAllHospitals();
+            setHospitals(response);
         } catch (error) {
             console.error('Error fetching hospitals:', error);
         } finally {
@@ -155,13 +127,8 @@ const Admin: React.FC = () => {
     const fetchPatients = async () => {
         try {
             setIsLoading(true);
-            const token = localStorage.getItem('token');
-            const response = await axios.get('http://localhost:8801/api/patient/getAllPatient', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            setPatients(response.data);
+            const data = await patientService.getAllPatients();
+            setPatients(data);
         } catch (error) {
             console.error('Error fetching patients:', error);
             showNotification('Không thể tải danh sách bệnh nhân', 'error');
@@ -179,34 +146,23 @@ const Admin: React.FC = () => {
     const handleHospitalSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            const formData = new FormData();
-            formData.append("file", hospitalForm.image!);
-            formData.append("upload_preset", "Hospital");
+            if (!hospitalForm.image) {
+                showNotification('Vui lòng chọn ảnh bệnh viện', 'error');
+                return;
+            }
+
             // Upload ảnh lên Cloudinary
-            const uploadResponse = await axios.post(
-                `https://api.cloudinary.com/v1_1/di53bdbjf/image/upload`,
-                formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                }
-            );
-            console.log(uploadResponse.data.secure_url);
+            const avatarUrl = await cloudinaryService.uploadImage(hospitalForm.image, 'Hospital');
+
             // Tạo bệnh viện mới với URL ảnh đã upload
             const hospitalData = {
-                avatarUrl: uploadResponse.data.secure_url,
+                avatarUrl,
                 name: hospitalForm.name,
                 address: hospitalForm.address,
                 phone: hospitalForm.phone
             };
 
-            await axios.post('http://localhost:8801/api/hospital/add', hospitalData, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
+            await hospitalService.addHospital(hospitalData);
 
             // Đóng modal và reset form
             setShowHospitalModal(false);
@@ -216,7 +172,7 @@ const Admin: React.FC = () => {
             fetchHospitals();
         } catch (error) {
             console.error('Error adding hospital:', error);
-            alert('Có lỗi xảy ra khi thêm bệnh viện');
+            showNotification('Có lỗi xảy ra khi thêm bệnh viện', 'error');
         }
     };
 
@@ -233,23 +189,12 @@ const Admin: React.FC = () => {
         setSelectedHospital(hospital);
         setShowHospitalDetailModal(true);
         try {
-            const token = localStorage.getItem('token');
-            // Gọi API lấy danh sách chuyên khoa
-            const specializations = await specializationService.getAllSpecializations(hospital.id.toString());
-            console.log('Danh sách chuyên khoa:', specializations);
-            setSpecializations(specializations);
-
-            // Gọi API lấy danh sách bác sĩ
-            const doctorResponse = await axios.get(
-                `http://localhost:8801/api/doctor/getDoctorByHospital?hospital_id=${hospital.id}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                }
-            );
-            console.log('Danh sách bác sĩ:', doctorResponse.data);
-            setDoctors(doctorResponse.data);
+            const [specializationsData, doctorsData] = await Promise.all([
+                specializationService.getAllSpecializations(hospital.id.toString()),
+                doctorService.getDoctorsByHospital(hospital.id)
+            ]);
+            setSpecializations(specializationsData);
+            setDoctors(doctorsData);
         } catch (error) {
             console.error('Error fetching hospital details:', error);
             showNotification('Không thể tải thông tin bệnh viện', 'error');
@@ -343,81 +288,49 @@ const Admin: React.FC = () => {
     const handleAddDoctor = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                showNotification('Vui lòng đăng nhập lại', 'error');
-                return;
-            }
-
-            if (!doctorForm.image) {
-                showNotification('Vui lòng chọn ảnh', 'error');
-                return;
-            }
-
             if (!selectedHospital) {
                 showNotification('Vui lòng chọn bệnh viện', 'error');
                 return;
             }
 
-            const formData = new FormData();
-            formData.append("file", doctorForm.image);
-            formData.append("upload_preset", "Hospital");
+            if (!doctorForm.image) {
+                showNotification('Vui lòng chọn ảnh bác sĩ', 'error');
+                return;
+            }
 
             // Upload ảnh lên Cloudinary
-            const uploadResponse = await axios.post(
-                `https://api.cloudinary.com/v1_1/di53bdbjf/image/upload`,
-                formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                }
-            );
+            const avatarUrl = await cloudinaryService.uploadImage(doctorForm.image, 'Doctor');
 
             // Thêm bác sĩ mới
-            const response = await axios.post(
-                `http://localhost:8801/api/doctor/add`,
-                {
-                    registerRequest: {
-                        name: doctorForm.name,
-                        email: doctorForm.email,
-                        password: doctorForm.password,
-                        phone: doctorForm.phone,
-                        gender: doctorForm.gender,
-                        dateOfBirth: doctorForm.dateOfBirth,
-                        avatarUrl: uploadResponse.data.secure_url,
-                        address: doctorForm.address
-                    },
-                    about: doctorForm.about,
-                    specialization_id: parseInt(doctorForm.specialization),
-                    yearsOfExperience: parseInt(doctorForm.experience),
-                    hospital_id: selectedHospital.id
+            await doctorService.addDoctor({
+                registerRequest: {
+                    name: doctorForm.name,
+                    email: doctorForm.email,
+                    password: doctorForm.password,
+                    phone: doctorForm.phone,
+                    gender: doctorForm.gender,
+                    dateOfBirth: doctorForm.dateOfBirth,
+                    avatarUrl,
+                    address: doctorForm.address
                 },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                }
-            );
+                about: doctorForm.about,
+                specialization_id: parseInt(doctorForm.specialization),
+                yearsOfExperience: parseInt(doctorForm.experience),
+                hospital_id: selectedHospital.id
+            });
 
-            if (response.status === 200 || response.status === 201) {
-                showNotification('Thêm bác sĩ thành công', 'success');
-                setShowAddDoctorModal(false);
-                resetDoctorForm();
+            showNotification('Thêm bác sĩ thành công', 'success');
+            setShowAddDoctorModal(false);
+            resetDoctorForm();
 
-                // Refresh danh sách bác sĩ
-                if (selectedHospital) {
-                    const doctorResponse = await axios.get(`http://localhost:8801/api/doctor/hospital/${selectedHospital.id}`, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                    setDoctors(doctorResponse.data);
-                }
+            // Refresh danh sách bác sĩ
+            if (selectedHospital) {
+                const doctorsData = await doctorService.getDoctorsByHospital(selectedHospital.id);
+                setDoctors(doctorsData);
             }
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error adding doctor:', error);
-            showNotification(error.response?.data?.message || 'Có lỗi xảy ra khi thêm bác sĩ', 'error');
+            showNotification('Có lỗi xảy ra khi thêm bác sĩ', 'error');
         }
     };
 
@@ -601,7 +514,7 @@ const Admin: React.FC = () => {
                                                         <td>
                                                             <button
                                                                 className={`toggle-button ${patient.user.enabled ? 'disable' : 'enable'}`}
-                                                                onClick={() => handleTogglePatientStatus(patient.id, patient.user.enabled)}
+                                                                onClick={() => handleTogglePatientStatus(parseInt(patient.id), patient.user.enabled)}
                                                             >
                                                                 {patient.user.enabled ? 'Khóa' : 'Mở khóa'}
                                                             </button>
