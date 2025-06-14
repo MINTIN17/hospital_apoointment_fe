@@ -1,20 +1,9 @@
-import axios from 'axios';
-import { RegisterRequest, RegisterResponse, LoginRequest, LoginResponse, ApiError, User } from '../types/api';
-
-// Thay vì dùng URL tuyệt đối, dùng URL tương đối
-const API_URL = '/api';
-
-const api = axios.create({
-    baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
+import axiosInstance from '../config/axios';
+import { RegisterRequest, RegisterResponse, LoginRequest, LoginResponse, ApiError, User, ChangePasswordRequest, ChangePasswordResponse } from '../types/api';
 
 // Hàm decode JWT token
 const decodeJwt = (token: string): any => {
     try {
-        // Lấy phần payload của token (phần thứ hai sau khi tách theo dấu chấm)
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
         const jsonPayload = decodeURIComponent(
@@ -31,7 +20,7 @@ const decodeJwt = (token: string): any => {
 };
 
 // Thêm interceptor để xử lý token
-api.interceptors.request.use((config) => {
+axiosInstance.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
     console.log('API Request - Token exists:', !!token);
     if (token) {
@@ -47,7 +36,7 @@ api.interceptors.request.use((config) => {
 });
 
 // Thêm interceptor để xử lý lỗi
-api.interceptors.response.use(
+axiosInstance.interceptors.response.use(
     (response) => {
         console.log('API Response - Status:', response.status);
         return response;
@@ -75,13 +64,11 @@ export const authService = {
     async login(credentials: LoginRequest): Promise<LoginResponse> {
         try {
             console.log('Auth Service - Attempting login');
-            const response = await axios.post<LoginResponse>(`${API_URL}/auth/login`, credentials);
+            const response = await axiosInstance.post<LoginResponse>('/auth/login', credentials);
             console.log('Auth Service - Login successful');
             
-            // Store token
             localStorage.setItem('token', response.data.token);
             
-            // Decode và log token ngay sau khi nhận được
             const decodedToken = decodeJwt(response.data.token.replace('Bearer ', ''));
             console.log('Login - Decoded Token:', decodedToken);
             console.log('Login - Token payload:', {
@@ -90,11 +77,9 @@ export const authService = {
                 exp: decodedToken?.exp
             });
             
-            // Lưu role từ token
             if (decodedToken && decodedToken.role) {
                 console.log('Role từ token:', decodedToken.role);
                 
-                // Lưu user data theo role
                 switch(decodedToken.role) {
                     case 'PATIENT':
                         if (response.data.patient) {
@@ -131,22 +116,20 @@ export const authService = {
         }
     },
 
-    getCurrentUser(): User | null {
-        const userStr = localStorage.getItem('user');
-        if (!userStr) return null;
+    async register(userData: RegisterRequest): Promise<RegisterResponse> {
         try {
-            return JSON.parse(userStr);
+            const response = await axiosInstance.post<RegisterResponse>('/auth/register', userData);
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+            return response.data;
         } catch (error) {
-            console.error('Auth Service - Error parsing user data:', error);
-            return null;
+            throw error;
         }
     },
 
-    async register(userData: RegisterRequest): Promise<RegisterResponse> {
+    async changePassword(data: ChangePasswordRequest): Promise<String> {
         try {
-            const response = await axios.post<RegisterResponse>(`${API_URL}/auth/register`, userData);
-            localStorage.setItem('token', response.data.token);
-            localStorage.setItem('user', JSON.stringify(response.data.user));
+            const response = await axiosInstance.put<String>('/auth/changePassword', data);
             return response.data;
         } catch (error) {
             throw error;
@@ -163,6 +146,16 @@ export const authService = {
     isAuthenticated(): boolean {
         const token = localStorage.getItem('token');
         return !!token && token.startsWith('Bearer ');
+    },
+
+    getCurrentUser(): User | null {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) return null;
+        try {
+            return JSON.parse(userStr);
+        } catch (error) {
+            console.error('Auth Service - Error parsing user data:', error);
+            return null;
+        }
     }
-};
-export default api; 
+}; 

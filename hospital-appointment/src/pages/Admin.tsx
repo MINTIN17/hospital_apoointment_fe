@@ -10,14 +10,7 @@ import '../styles/Admin.css';
 import logoImage from '../assets/logo.png';
 import { doctorResponse, Patient, Appointment } from '../types/api';
 import { appointmentService } from '../services/appointmentService';
-
-interface Hospital {
-    id: number;
-    avatarUrl: string;
-    name: string;
-    address: string;
-    phone: string;
-}
+import { Hospital } from '../types/api';
 
 interface Specialization {
     id: number;
@@ -79,6 +72,19 @@ const Admin: React.FC = () => {
         date: '',
         status: ''
     });
+    const [hospitalSearchTerm, setHospitalSearchTerm] = useState('');
+    const [filteredHospitals, setFilteredHospitals] = useState<Hospital[]>([]);
+    const [patientSearchTerm, setPatientSearchTerm] = useState('');
+    const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
+    // const [currentHospitalPage, setCurrentHospitalPage] = useState(1);
+    // const [totalHospitalPages, setTotalHospitalPages] = useState(1);
+    // const [isLoadingHospitals, setIsLoadingHospitals] = useState(false);
+    // const [hospitalError, setHospitalError] = useState<string | null>(null);
+
+    // // Calculate hospital statistics
+    const totalHospitals = hospitals.length;
+    // const activeHospitals = hospitals.filter(hospital => hospital.enabled).length;
+    // const disabledHospitals = hospitals.filter(hospital => !hospital.enabled).length;
 
     useEffect(() => {
         const checkAccess = () => {
@@ -156,6 +162,29 @@ const Admin: React.FC = () => {
         setFilteredAppointments(filtered);
         setCurrentPage(1); // Reset về trang 1 khi filter thay đổi
     }, [appointments, appointmentFilters]);
+
+    useEffect(() => {
+        if (hospitalSearchTerm) {
+            const filtered = hospitals.filter(hospital =>
+                hospital.name.toLowerCase().includes(hospitalSearchTerm.toLowerCase())
+            );
+            setFilteredHospitals(filtered);
+        } else {
+            setFilteredHospitals(hospitals);
+        }
+    }, [hospitalSearchTerm, hospitals]);
+
+    useEffect(() => {
+        if (patientSearchTerm) {
+            const filtered = patients.filter(patient =>
+                patient.user.email.toLowerCase().includes(patientSearchTerm.toLowerCase()) ||
+                patient.user.phone.toLowerCase().includes(patientSearchTerm.toLowerCase())
+            );
+            setFilteredPatients(filtered);
+        } else {
+            setFilteredPatients(patients);
+        }
+    }, [patientSearchTerm, patients]);
 
     const fetchHospitals = async () => {
         try {
@@ -474,13 +503,15 @@ const Admin: React.FC = () => {
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentPatients = patients.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(patients.length / itemsPerPage);
+    const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
 
     const handlePageChange = (pageNumber: number) => {
         setCurrentPage(pageNumber);
     };
 
     const renderPagination = () => {
+        if (filteredPatients.length === 0) return null;
+
         const pageNumbers = [];
         for (let i = 1; i <= totalPages; i++) {
             pageNumbers.push(i);
@@ -581,60 +612,95 @@ const Admin: React.FC = () => {
     const renderContent = () => {
         switch (activeTab) {
             case 'patients':
+                const activePatients = patients.filter(patient => patient.user.enabled).length;
+                const disabledPatients = patients.filter(patient => !patient.user.enabled).length;
+
                 return (
                     <div className="admin-content">
                         <div className="content-header">
                             <h2>Quản lý bệnh nhân</h2>
+                            <div className="patients-stats">
+                                <div className="stat-card active">
+                                    <div className="stat-icon">👥</div>
+                                    <div className="stat-info">
+                                        <div className="stat-label">Đang hoạt động</div>
+                                        <div className="stat-value">{activePatients}</div>
+                                    </div>
+                                </div>
+                                <div className="stat-card disabled">
+                                    <div className="stat-icon">🔒</div>
+                                    <div className="stat-info">
+                                        <div className="stat-label">Đã khóa</div>
+                                        <div className="stat-value">{disabledPatients}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="patients-search">
+                                <input
+                                    type="text"
+                                    placeholder="Tìm kiếm theo email hoặc số điện thoại..."
+                                    value={patientSearchTerm}
+                                    onChange={(e) => setPatientSearchTerm(e.target.value)}
+                                    className="search-input"
+                                />
+                            </div>
                         </div>
+
                         <div className="content-body">
                             {isLoading ? (
                                 <div className="loading">Đang tải...</div>
                             ) : (
                                 <>
                                     <div className="patients-table-container">
-                                        <table className="patients-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>ID</th>
-                                                    <th>Họ và tên</th>
-                                                    <th>Email</th>
-                                                    <th>Số điện thoại</th>
-                                                    <th>Giới tính</th>
-                                                    <th>Ngày sinh</th>
-                                                    <th>Địa chỉ</th>
-                                                    <th>Trạng thái</th>
-                                                    <th>Thao tác</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {currentPatients.map((patient) => (
-                                                    <tr key={patient.id}>
-                                                        <td>{patient.id}</td>
-                                                        <td>{patient.user.name}</td>
-                                                        <td>{patient.user.email}</td>
-                                                        <td>{patient.user.phone}</td>
-                                                        <td>{patient.user.gender === 'MALE' ? 'Nam' : 'Nữ'}</td>
-                                                        <td>{formatDate(patient.user.dateOfBirth)}</td>
-                                                        <td>{patient.user.address}</td>
-                                                        <td>
-                                                            <span className={`status-badge ${patient.user.enabled ? 'active' : 'disabled'}`}>
-                                                                {patient.user.enabled ? 'Hoạt động' : 'Đã khóa'}
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <button
-                                                                className={`toggle-button ${patient.user.enabled ? 'disable' : 'enable'}`}
-                                                                onClick={() => handleTogglePatientStatus(parseInt(patient.id), patient.user.enabled)}
-                                                            >
-                                                                {patient.user.enabled ? 'Khóa' : 'Mở khóa'}
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                        {filteredPatients.length === 0 ? (
+                                            <div className="no-data">Không tìm thấy bệnh nhân nào</div>
+                                        ) : (
+                                            <>
+                                                <table className="patients-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>ID</th>
+                                                            <th>Họ và tên</th>
+                                                            <th>Email</th>
+                                                            <th>Số điện thoại</th>
+                                                            <th>Giới tính</th>
+                                                            <th>Ngày sinh</th>
+                                                            <th>Địa chỉ</th>
+                                                            <th>Trạng thái</th>
+                                                            <th>Thao tác</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {filteredPatients.slice(indexOfFirstItem, indexOfLastItem).map((patient) => (
+                                                            <tr key={patient.id}>
+                                                                <td>{patient.id}</td>
+                                                                <td>{patient.user.name}</td>
+                                                                <td>{patient.user.email}</td>
+                                                                <td>{patient.user.phone}</td>
+                                                                <td>{patient.user.gender === 'MALE' ? 'Nam' : 'Nữ'}</td>
+                                                                <td>{formatDate(patient.user.dateOfBirth)}</td>
+                                                                <td>{patient.user.address}</td>
+                                                                <td>
+                                                                    <span className={`status-badge ${patient.user.enabled ? 'active' : 'disabled'}`}>
+                                                                        {patient.user.enabled ? 'Hoạt động' : 'Đã khóa'}
+                                                                    </span>
+                                                                </td>
+                                                                <td>
+                                                                    <button
+                                                                        className={`toggle-button ${patient.user.enabled ? 'disable' : 'enable'}`}
+                                                                        onClick={() => handleTogglePatientStatus(parseInt(patient.id), patient.user.enabled)}
+                                                                    >
+                                                                        {patient.user.enabled ? 'Khóa' : 'Mở khóa'}
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                                {renderPagination()}
+                                            </>
+                                        )}
                                     </div>
-                                    {totalPages > 1 && renderPagination()}
                                 </>
                             )}
                         </div>
@@ -644,20 +710,38 @@ const Admin: React.FC = () => {
                 return (
                     <div className="admin-content">
                         <div className="content-header">
-                            <h2>Quản lý bệnh viện</h2>
-                            <div className="action-buttons">
-                                <button className="add-button" onClick={() => setShowHospitalModal(true)}>
-                                    <span className="icon">🏥</span>
-                                    Thêm bệnh viện
-                                </button>
+                            <div className="header-left">
+                                <h2>Quản lý bệnh viện</h2>
+                                <div className="patients-stats">
+                                    <div className="stat-card active">
+                                        <div className="stat-icon">🏥</div>
+                                        <div className="stat-info">
+                                            <div className="stat-label">Tổng số</div>
+                                            <div className="stat-value">{totalHospitals}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="patients-search">
+                                    <input
+                                        type="text"
+                                        placeholder="Tìm kiếm theo tên bệnh viện..."
+                                        value={hospitalSearchTerm}
+                                        onChange={(e) => setHospitalSearchTerm(e.target.value)}
+                                        className="search-input"
+                                    />
+                                </div>
                             </div>
+                            <button className="add-button" onClick={() => setShowHospitalModal(true)}>
+                                <span className="icon">🏥</span>
+                                Thêm bệnh viện
+                            </button>
                         </div>
                         <div className="content-body">
                             {isLoading ? (
                                 <div className="loading">Đang tải...</div>
                             ) : (
                                 <div className="hospital-grid">
-                                    {hospitals.map((hospital) => (
+                                    {filteredHospitals.map((hospital) => (
                                         <div
                                             key={hospital.id}
                                             className="hospital-card"
@@ -668,14 +752,28 @@ const Admin: React.FC = () => {
                                             </div>
                                             <div className="hospital-info">
                                                 <h3>{hospital.name}</h3>
-                                                <p className="hospital-address">
-                                                    <span className="icon">📍</span>
-                                                    {hospital.address}
-                                                </p>
-                                                <p className="hospital-phone">
-                                                    <span className="icon">📞</span>
-                                                    {hospital.phone}
-                                                </p>
+                                                <div className="hospital-details">
+                                                    <div className="hospital-contact">
+                                                        <p className="hospital-address">
+                                                            <span className="icon">📍</span>
+                                                            {hospital.address}
+                                                        </p>
+                                                        <p className="hospital-phone">
+                                                            <span className="icon">📞</span>
+                                                            {hospital.phone}
+                                                        </p>
+                                                    </div>
+                                                    <div className="hospital-stats">
+                                                        <p className="stat-item">
+                                                            <span className="icon">👨‍⚕️</span>
+                                                            {hospital.doctorCount} Bác sĩ
+                                                        </p>
+                                                        <p className="stat-item">
+                                                            <span className="icon">🏥</span>
+                                                            {hospital.specializationCount} Chuyên khoa
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}

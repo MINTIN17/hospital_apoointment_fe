@@ -108,15 +108,27 @@ export interface Schedule {
 
 export interface Hospital {
     id: number;
+    avatarUrl: string;
     name: string;
     address: string;
     phone: string;
-    email: string;
-    description: string;
+    doctorCount: number;
+    specializationCount: number;
 }
 
 export interface Specialization {
     id: number;
     name: string;
     description: string;
+}
+
+export interface ChangePasswordRequest {
+    old_password: string;
+    new_password: string;
+    patient_id: number;
+}
+
+export interface ChangePasswordResponse {
+    success: boolean;
+    message: string;
 }

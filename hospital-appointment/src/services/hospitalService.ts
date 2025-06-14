@@ -1,13 +1,6 @@
 import axiosInstance from '../config/axios';
+import { Hospital } from '../types/api';
 
-export interface Hospital {
-    id: number;
-    name: string;
-    address: string;
-    phone: string;
-    rating: number;
-    avatarUrl: string;
-}
 
 export const hospitalService = {
     getAllHospitals: async (): Promise<Hospital[]> => {
@@ -30,7 +23,7 @@ export const hospitalService = {
         }
     },
 
-    addHospital: async (hospitalData: Omit<Hospital, 'id' | 'rating'>): Promise<Hospital> => {
+    addHospital: async (hospitalData: Omit<Hospital, 'id' | 'doctorCount' | 'specializationCount'>): Promise<Hospital> => {
         try {
             const response = await axiosInstance.post('/hospital/add', hospitalData);
             return response.data;
