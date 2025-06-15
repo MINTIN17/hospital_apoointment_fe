@@ -11,6 +11,7 @@ import logoImage from '../assets/logo.png';
 import { doctorResponse, Patient, Appointment } from '../types/api';
 import { appointmentService } from '../services/appointmentService';
 import { Hospital } from '../types/api';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 interface Specialization {
     id: number;
@@ -76,15 +77,28 @@ const Admin: React.FC = () => {
     const [filteredHospitals, setFilteredHospitals] = useState<Hospital[]>([]);
     const [patientSearchTerm, setPatientSearchTerm] = useState('');
     const [filteredPatients, setFilteredPatients] = useState<Patient[]>([]);
-    // const [currentHospitalPage, setCurrentHospitalPage] = useState(1);
-    // const [totalHospitalPages, setTotalHospitalPages] = useState(1);
-    // const [isLoadingHospitals, setIsLoadingHospitals] = useState(false);
-    // const [hospitalError, setHospitalError] = useState<string | null>(null);
+    const [appointmentStats, setAppointmentStats] = useState({
+        CANCELLED: 0,
+        COMPLETED: 0
+    });
+    const [dateRange, setDateRange] = useState(() => {
+        const today = new Date();
+        const startOfYear = new Date(today.getFullYear(), 0, 1);
+        return {
+            startDate: startOfYear.toISOString().split('T')[0],
+            endDate: today.toISOString().split('T')[0]
+        };
+    });
+    const [hospitalStats, setHospitalStats] = useState<{ hospitalName: string; count: number }[]>([]);
+    const [doctorStats, setDoctorStats] = useState<{
+        doctorName: string;
+        cancelled: number;
+        completed: number;
+    }[]>([]);
+    const [revisitStats, setRevisitStats] = useState<{ revisitRate: string; daysWindow: number }>({ revisitRate: '0%', daysWindow: 0 });
 
-    // // Calculate hospital statistics
+    // Calculate hospital statistics
     const totalHospitals = hospitals.length;
-    // const activeHospitals = hospitals.filter(hospital => hospital.enabled).length;
-    // const disabledHospitals = hospitals.filter(hospital => !hospital.enabled).length;
 
     useEffect(() => {
         const checkAccess = () => {
@@ -185,6 +199,15 @@ const Admin: React.FC = () => {
             setFilteredPatients(patients);
         }
     }, [patientSearchTerm, patients]);
+
+    useEffect(() => {
+        if (activeTab === 'statistics') {
+            fetchAppointmentStats();
+            fetchHospitalStats();
+            fetchDoctorStats();
+            fetchRevisitStats();
+        }
+    }, [activeTab, dateRange]);
 
     const fetchHospitals = async () => {
         try {
@@ -609,6 +632,57 @@ const Admin: React.FC = () => {
         }
     };
 
+    const fetchAppointmentStats = async () => {
+        try {
+            const stats = await appointmentService.getCountAppointment(dateRange.startDate, dateRange.endDate);
+            setAppointmentStats(stats);
+        } catch (error) {
+            console.error('Error fetching appointment stats:', error);
+            showNotification('Không thể tải thống kê cuộc hẹn', 'error');
+        }
+    };
+
+    const fetchHospitalStats = async () => {
+        try {
+            const stats = await appointmentService.getCountAppointmentHospital(dateRange.startDate, dateRange.endDate);
+            console.log('Hospital stats:', stats); // Debug log
+            // Convert object to array of { hospitalName, count }
+            const statsArray = Object.entries(stats).map(([hospitalName, count]) => ({
+                hospitalName,
+                count
+            }));
+            setHospitalStats(statsArray);
+        } catch (error) {
+            console.error('Error fetching hospital stats:', error);
+            showNotification('Không thể tải thống kê theo bệnh viện', 'error');
+            setHospitalStats([]);
+        }
+    };
+
+    const fetchDoctorStats = async () => {
+        try {
+            const stats = await appointmentService.getCountAppointmentDoctor(dateRange.startDate, dateRange.endDate);
+            setDoctorStats(stats);
+        } catch (error) {
+            console.error('Error fetching doctor stats:', error);
+            showNotification('Không thể tải thống kê theo bác sĩ', 'error');
+            setDoctorStats([]);
+        }
+    };
+
+    const fetchRevisitStats = async () => {
+        try {
+            const data = await appointmentService.getRevisitRate();
+            setRevisitStats(data);
+        } catch (error) {
+            console.error('Error fetching revisit stats:', error);
+            notification.error({
+                message: 'Lỗi',
+                description: 'Không thể lấy thống kê tỉ lệ tái khám',
+            });
+        }
+    };
+
     const renderContent = () => {
         switch (activeTab) {
             case 'patients':
@@ -885,7 +959,118 @@ const Admin: React.FC = () => {
                     </div>
                 );
             case 'statistics':
-                return <div className="admin-content">Thống kê</div>;
+                const data = [
+                    { name: 'Đã hoàn thành', value: appointmentStats.COMPLETED },
+                    { name: 'Đã hủy', value: appointmentStats.CANCELLED }
+                ];
+
+                const COLORS = ['#4CAF50', '#f44336'];
+
+                return (
+                    <div className="admin-content">
+                        <div className="statistics-filters">
+                            <div className="filter-group">
+                                <label>Từ ngày:</label>
+                                <input
+                                    type="date"
+                                    value={dateRange.startDate}
+                                    onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+                                />
+                            </div>
+                            <div className="filter-group">
+                                <label>Đến ngày:</label>
+                                <input
+                                    type="date"
+                                    value={dateRange.endDate}
+                                    onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+                                />
+                            </div>
+                            <button
+                                className="filter-button"
+                                onClick={() => {
+                                    if (dateRange.startDate && dateRange.endDate) {
+                                        fetchAppointmentStats();
+                                        fetchHospitalStats();
+                                        fetchDoctorStats();
+                                        fetchRevisitStats();
+                                    } else {
+                                        showNotification('Vui lòng chọn khoảng thời gian', 'error');
+                                    }
+                                }}
+                            >
+                                Lọc
+                            </button>
+                        </div>
+                        <div className="statistics-container">
+                            <div className="pie-chart-container">
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <PieChart>
+                                        <Pie
+                                            data={data}
+                                            cx="50%"
+                                            cy="50%"
+                                            labelLine={false}
+                                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                            outerRadius={80}
+                                            fill="#8884d8"
+                                            dataKey="value"
+                                        >
+                                            {data.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip />
+                                        <Legend />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="revisit-stats-container">
+                                <h3>Thống kê tái khám</h3>
+                                <div className="revisit-stats-card">
+                                    <div className="revisit-stat-info">
+                                        <div className="revisit-stat-rate">{revisitStats.revisitRate}</div>
+                                        <div className="revisit-stat-label">Tỉ lệ bệnh nhân tái khám trong {revisitStats.daysWindow} ngày</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="hospital-stats-container">
+                                <h3>Thống kê theo bệnh viện</h3>
+                                <div className="hospital-stats-grid">
+                                    {hospitalStats.map((stat, index) => (
+                                        <div key={index} className="hospital-stat-card">
+                                            <div className="hospital-stat-icon">🏥</div>
+                                            <div className="hospital-stat-info">
+                                                <div className="hospital-stat-name">{stat.hospitalName}</div>
+                                                <div className="hospital-stat-count">{stat.count} cuộc hẹn</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="hospital-stats-container">
+                                <h3>Thống kê theo bác sĩ</h3>
+                                <div className="hospital-stats-grid">
+                                    {doctorStats.map((stat, index) => (
+                                        <div key={index} className="hospital-stat-card">
+                                            <div className="hospital-stat-icon">👨‍⚕️</div>
+                                            <div className="hospital-stat-info">
+                                                <div className="hospital-stat-name">{stat.doctorName}</div>
+                                                <div className="hospital-stat-count">
+                                                    <div className="stat-count-item completed">
+                                                        <span>✅</span> Đã hoàn thành: {stat.completed}
+                                                    </div>
+                                                    <div className="stat-count-item cancelled">
+                                                        <span>❌</span> Đã hủy: {stat.cancelled}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
             default:
                 return <div className="admin-content">Quản lý bệnh nhân</div>;
         }
@@ -895,12 +1080,12 @@ const Admin: React.FC = () => {
         <div className="admin-page">
             {/* Top Bar */}
             <div className="top-bar">
-                <div className="top-bar-content">
-                    <div className="logo">
-                        <img src={logoImage} alt="Lofi Pharma" />
-                        <span>Lofi Pharma</span>
+                <div className="top-bar-content" >
+                    <div className="logo" >
+                        <img src={logoImage} alt="VietNam Pharma" />
+                        <span style={{ color: '#fff' }}>VietNam Pharma</span>
                     </div>
-                    <div className="user-greeting">
+                    <div className="user-greeting" style={{}}>
                         <span>Xin chào, Admin!</span>
                         <button onClick={handleLogout} className="logout-btn">Đăng xuất</button>
                     </div>
@@ -1280,6 +1465,14 @@ const Admin: React.FC = () => {
                                         <option value="FEMALE">Nữ</option>
                                     </select>
                                 </div>
+                                <div className="modal-footer">
+                                    <button type="button" className="cancel-button" onClick={() => setShowAddDoctorModal(false)}>
+                                        Hủy
+                                    </button>
+                                    <button type="submit" className="submit-button">
+                                        Thêm bác sĩ
+                                    </button>
+                                </div>
                             </div>
                             <div className="form-right">
                                 <div className="form-group">
@@ -1361,14 +1554,7 @@ const Admin: React.FC = () => {
                                     />
                                 </div>
                             </div>
-                            <div className="modal-footer">
-                                <button type="button" className="cancel-button" onClick={() => setShowAddDoctorModal(false)}>
-                                    Hủy
-                                </button>
-                                <button type="submit" className="submit-button">
-                                    Thêm bác sĩ
-                                </button>
-                            </div>
+
                         </form>
                     </div>
                 </div>

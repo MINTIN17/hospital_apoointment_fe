@@ -32,6 +32,12 @@ const Doctor: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const appointmentsPerPage = 5;
     const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
+    const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+    const [changePasswordForm, setChangePasswordForm] = useState({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+    });
 
     // Tạo mảng các ngày trong tuần
     const weekDays = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
@@ -662,7 +668,7 @@ const Doctor: React.FC = () => {
                 return (
                     <div className="doctor-main">
                         <div className="schedule-container">
-                            <div style={{maxHeight: '50px', display: 'flex', marginBottom: '10px'}}>
+                            <div style={{ maxHeight: '50px', display: 'flex', marginBottom: '10px' }}>
                                 <button
                                     className="schedule-button"
                                     onClick={() => setShowScheduleModal(true)}
@@ -671,9 +677,9 @@ const Doctor: React.FC = () => {
                                 </button>
 
                                 {/* Calendar for confirmed/completed appointments */}
-                                <h3 style={{ marginTop: '10px',maxWidth: '300px',marginLeft: '200px', marginBottom: '10px', color: 'black', textAlign: 'center' }}>Lịch hẹn</h3>
+                                <h3 style={{ marginTop: '10px', maxWidth: '300px', marginLeft: '200px', marginBottom: '10px', color: 'black', textAlign: 'center' }}>Lịch hẹn</h3>
                             </div>
-                            
+
                             <div style={{ height: 500 }}>
                                 <Calendar
                                     localizer={localizer}
@@ -810,6 +816,41 @@ const Doctor: React.FC = () => {
         navigate('/login', { replace: true });
     };
 
+    const handleChangePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (changePasswordForm.newPassword !== changePasswordForm.confirmPassword) {
+            notification.error({
+                message: 'Lỗi',
+                description: 'Mật khẩu mới không khớp với xác nhận mật khẩu'
+            });
+            return;
+        }
+
+        try {
+            await axiosInstance.post('/doctor/change-password', {
+                currentPassword: changePasswordForm.currentPassword,
+                newPassword: changePasswordForm.newPassword
+            });
+
+            notification.success({
+                message: 'Thành công',
+                description: 'Mật khẩu đã được thay đổi'
+            });
+            setShowChangePasswordModal(false);
+            setChangePasswordForm({
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+            });
+        } catch (error) {
+            notification.error({
+                message: 'Lỗi',
+                description: 'Không thể thay đổi mật khẩu'
+            });
+        }
+    };
+
     return (
         <div className="doctor-page">
             {/* Doctor Content */}
@@ -822,7 +863,12 @@ const Doctor: React.FC = () => {
                     </div>
                     <div className="user-greeting">
                         <span>Xin chào, bác sĩ {doctor?.name}</span>
-                        <button onClick={handleLogout} className="logout-btn">Đăng xuất</button>
+                        <div className="user-actions">
+                            <button onClick={() => setShowChangePasswordModal(true)} className="change-password-btn">
+                                Đổi mật khẩu
+                            </button>
+                            <button onClick={handleLogout} className="logout-btn">Đăng xuất</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -887,6 +933,66 @@ const Doctor: React.FC = () => {
                     }}
                 >
                     {notification.message}
+                </div>
+            )}
+
+            {showChangePasswordModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h2>Đổi mật khẩu</h2>
+                            <button className="close-button" onClick={() => setShowChangePasswordModal(false)}>×</button>
+                        </div>
+                        <form onSubmit={handleChangePassword}>
+                            <div className="form-group">
+                                <label htmlFor="currentPassword">Mật khẩu hiện tại</label>
+                                <input
+                                    type="password"
+                                    id="currentPassword"
+                                    value={changePasswordForm.currentPassword}
+                                    onChange={(e) => setChangePasswordForm(prev => ({
+                                        ...prev,
+                                        currentPassword: e.target.value
+                                    }))}
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="newPassword">Mật khẩu mới</label>
+                                <input
+                                    type="password"
+                                    id="newPassword"
+                                    value={changePasswordForm.newPassword}
+                                    onChange={(e) => setChangePasswordForm(prev => ({
+                                        ...prev,
+                                        newPassword: e.target.value
+                                    }))}
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label htmlFor="confirmPassword">Xác nhận mật khẩu mới</label>
+                                <input
+                                    type="password"
+                                    id="confirmPassword"
+                                    value={changePasswordForm.confirmPassword}
+                                    onChange={(e) => setChangePasswordForm(prev => ({
+                                        ...prev,
+                                        confirmPassword: e.target.value
+                                    }))}
+                                    required
+                                />
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="cancel-button" onClick={() => setShowChangePasswordModal(false)}>
+                                    Hủy
+                                </button>
+                                <button type="submit" className="submit-button">
+                                    Đổi mật khẩu
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
         </div>

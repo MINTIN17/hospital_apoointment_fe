@@ -92,6 +92,7 @@
 
 .logo {
     display: flex;
+    width: 400px;
     align-items: center;
     gap: 10px;
 }
@@ -110,7 +111,7 @@
     display: flex;
     gap: 30px;
     list-style: none;
-    margin-left: 250px !important;
+    margin-left: 400px !important;
     margin: 0;
     padding: 0;
 }

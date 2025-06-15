@@ -156,12 +156,12 @@ const Layout: React.FC = () => {
             <nav className="main-nav">
                 <div className="nav-content">
                     <div className="logo">
-                        <img src={logoImage} alt="Lofi Pharma" />
-                        <span>Lofi Pharma</span>
+                        <img src={logoImage} alt="VietNam Pharma" />
+                        <span>VietNam Pharma</span>
                     </div>
                     <div className="nav-links">
                         <NavLink to="/" className={({ isActive }) => isActive ? 'active' : ''}>Trang chủ</NavLink>
-                        <NavLink to="/introduction" className={({ isActive }) => isActive ? 'active' : ''}>Giới thiệu</NavLink>
+                        {/* <NavLink to="/introduction" className={({ isActive }) => isActive ? 'active' : ''}>Giới thiệu</NavLink> */}
                         <NavLink to="/diagnosis" className={({ isActive }) => isActive ? 'active' : ''}>Chuẩn đoán</NavLink>
                         <NavLink to="/hospitals" className={({ isActive }) => isActive ? 'active' : ''}>Danh sách các bệnh viện</NavLink>
                         <NavLink to="/history" className={({ isActive }) => isActive ? 'active' : ''}>Lịch sử khám bệnh</NavLink>
