@@ -67,7 +67,7 @@ const Layout: React.FC = () => {
 
             const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
             const patientId = userInfo.id;
-
+            console.log(userInfo)
             if (!patientId) {
                 setPasswordError('Không tìm thấy thông tin người dùng');
                 return;
@@ -76,7 +76,8 @@ const Layout: React.FC = () => {
             const response = await authService.changePassword({
                 old_password: currentPassword,
                 new_password: newPassword,
-                patient_id: patientId
+                user_id: patientId,
+                role: userInfo.role
             });
             if (response === 'Password changed successfully') {
                 alert('Đổi mật khẩu thành công');

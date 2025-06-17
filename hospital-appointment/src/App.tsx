@@ -14,6 +14,8 @@ import Layout from './components/Layout';
 import DoctorList from './components/DoctorList';
 import DoctorDetail from './pages/DoctorDetail';
 import PatientHistory from './pages/PatientHistory';
+import ForgotPassword from './pages/ForgotPassword';
+import Diagnosis from './pages/Diagnosis';
 
 const App: React.FC = () => {
   return (
@@ -23,6 +25,7 @@ const App: React.FC = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/account-disabled" element={<AccountDisabled />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* Admin route */}
         <Route path="/admin" element={
@@ -46,7 +49,7 @@ const App: React.FC = () => {
           <Route path="/doctorList/:hospitalId/" element={<DoctorList />} />
           <Route path="/hospitals/:hospitalId/doctors/:doctorId" element={<DoctorDetail />} />
           <Route path="/introduction" element={<div>Giới thiệu</div>} />
-          <Route path="/diagnosis" element={<div>Chuẩn đoán</div>} />
+          <Route path="/diagnosis" element={<Diagnosis />} />
           <Route path="/history" element={<PatientHistory />} />
         </Route>
 

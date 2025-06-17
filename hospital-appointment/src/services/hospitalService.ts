@@ -31,5 +31,26 @@ export const hospitalService = {
             console.error('Error adding hospital:', error);
             throw error;
         }
+    },
+
+    updateHospital: async (hospitalData: {
+        id: string;
+        avatarUrl: string;
+        name: string;
+        address: string;
+        phone: string;
+    }) => {
+        const response = await axiosInstance.put('/hospital/update', hospitalData);
+        return response.data;
+    },
+
+    banHospital: async (hospitalId: number) => {
+        const response = await axiosInstance.put(`/hospital/ban?hospital_id=${hospitalId}`);
+        return response.data;
+    },
+
+    unbanHospital: async (hospitalId: number) => {
+        const response = await axiosInstance.put(`/hospital/unban?hospital_id=${hospitalId}`);
+        return response.data;
     }
 }; 

@@ -25,7 +25,7 @@ export interface doctorResponse {
     specialization_name: string;
     hospital_name: string;
     yearsOfExperience: number;
-    // enabled: boolean;
+    enabled: boolean;
 }
 
 export interface Patient {
@@ -114,6 +114,7 @@ export interface Hospital {
     phone: string;
     doctorCount: number;
     specializationCount: number;
+    enabled : boolean;
 }
 
 export interface Specialization {
@@ -125,7 +126,8 @@ export interface Specialization {
 export interface ChangePasswordRequest {
     old_password: string;
     new_password: string;
-    patient_id: number;
+    user_id: number;
+    role: string;
 }
 
 export interface ChangePasswordResponse {

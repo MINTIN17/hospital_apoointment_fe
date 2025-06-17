@@ -10,6 +10,7 @@ import type { Doctor } from '../types/api';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { authService } from '../services/api';
 
 moment.locale('vi');
 
@@ -38,6 +39,7 @@ const Doctor: React.FC = () => {
         newPassword: '',
         confirmPassword: ''
     });
+    const [passwordError, setPasswordError] = useState<string | null>(null);
 
     // Tạo mảng các ngày trong tuần
     const weekDays = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
@@ -113,7 +115,7 @@ const Doctor: React.FC = () => {
 
             // Gọi service để cập nhật trạng thái
             const response = await scheduleService.updateAvailability(changedSchedules);
-
+            console.log(response)
             if (response === "Update success") {
                 setShowScheduleModal(false);
                 showNotification('Lưu lịch làm việc thành công', 'success');
@@ -295,11 +297,11 @@ const Doctor: React.FC = () => {
             case 'PENDING':
                 return 'bg-yellow-100 text-yellow-800';
             case 'CONFIRMED':
-                return 'bg-green-100 text-green-800';
+                return 'bg-blue-100 text-blue-800';
             case 'CANCELLED':
                 return 'bg-red-100 text-red-800';
             case 'COMPLETED':
-                return 'bg-blue-100 text-blue-800';
+                return 'bg-green-100 text-green-800';
             default:
                 return 'bg-gray-100 text-gray-800';
         }
@@ -700,7 +702,7 @@ const Doctor: React.FC = () => {
                                         const typedEvent = event as { status: string };
                                         let classNames = ['rbc-event'];
                                         if (typedEvent.status) {
-                                            classNames.push(`status-${typedEvent.status}`);
+                                            classNames.push(`status-${typedEvent.status.toLowerCase()}`);
                                         }
                                         return {
                                             className: classNames.join(' '),
@@ -818,36 +820,69 @@ const Doctor: React.FC = () => {
 
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (changePasswordForm.newPassword !== changePasswordForm.confirmPassword) {
-            notification.error({
-                message: 'Lỗi',
-                description: 'Mật khẩu mới không khớp với xác nhận mật khẩu'
-            });
+        setPasswordError(null);
+        if (!changePasswordForm.currentPassword || !changePasswordForm.newPassword || !changePasswordForm.confirmPassword) {
+            setPasswordError('Vui lòng nhập đầy đủ thông tin');
             return;
         }
-
+        if (changePasswordForm.newPassword !== changePasswordForm.confirmPassword) {
+            setPasswordError('Mật khẩu mới không khớp với xác nhận mật khẩu');
+            return;
+        }
+        if (changePasswordForm.currentPassword === changePasswordForm.newPassword) {
+            setPasswordError('Mật khẩu mới không được giống mật khẩu cũ');
+            return;
+        }
+        if (changePasswordForm.newPassword.length < 8) {
+            setPasswordError('Mật khẩu phải có ít nhất 8 ký tự');
+            return;
+        }
+        if (!/[A-Z]/.test(changePasswordForm.newPassword) || !/[a-z]/.test(changePasswordForm.newPassword)) {
+            setPasswordError('Mật khẩu phải có cả chữ hoa và chữ thường');
+            return;
+        }
+        if (!/[0-9]/.test(changePasswordForm.newPassword)) {
+            setPasswordError('Mật khẩu phải có ít nhất 1 số');
+            return;
+        }
+        if (/[^A-Za-z0-9]/.test(changePasswordForm.newPassword)) {
+            setPasswordError('Mật khẩu không được chứa ký tự đặc biệt');
+            return;
+        }
+        const userInfo = JSON.parse(localStorage.getItem('user') || '{}');
+        const userId = userInfo.id;
+        const role = userInfo.role;
+        if (!userId) {
+            setPasswordError('Không tìm thấy thông tin người dùng');
+            return;
+        }
         try {
-            await axiosInstance.post('/doctor/change-password', {
-                currentPassword: changePasswordForm.currentPassword,
-                newPassword: changePasswordForm.newPassword
+            const response = await authService.changePassword({
+                old_password: changePasswordForm.currentPassword,
+                new_password: changePasswordForm.newPassword,
+                user_id: userId,
+                role: role
             });
-
-            notification.success({
-                message: 'Thành công',
-                description: 'Mật khẩu đã được thay đổi'
-            });
-            setShowChangePasswordModal(false);
-            setChangePasswordForm({
-                currentPassword: '',
-                newPassword: '',
-                confirmPassword: ''
-            });
-        } catch (error) {
-            notification.error({
-                message: 'Lỗi',
-                description: 'Không thể thay đổi mật khẩu'
-            });
+            if (response === 'Password changed successfully') {
+                alert('Đổi mật khẩu thành công');
+                setShowChangePasswordModal(false);
+                setChangePasswordForm({
+                    currentPassword: '',
+                    newPassword: '',
+                    confirmPassword: ''
+                });
+                setPasswordError(null);
+            } else if (response === 'Old password is incorrect') {
+                setPasswordError('Mật khẩu hiện tại không đúng');
+            } else {
+                setPasswordError(response.toString() || 'Đổi mật khẩu thất bại');
+            }
+        } catch (error: any) {
+            if (error.response?.data?.message === 'Old password is incorrect') {
+                setPasswordError('Mật khẩu hiện tại không đúng');
+            } else {
+                setPasswordError(error.response?.data?.message || 'Đổi mật khẩu thất bại');
+            }
         }
     };
 
@@ -983,6 +1018,9 @@ const Doctor: React.FC = () => {
                                     required
                                 />
                             </div>
+                            {passwordError && (
+                                <div style={{ color: 'red', marginBottom: '10px' }}>{passwordError}</div>
+                            )}
                             <div className="modal-footer">
                                 <button type="button" className="cancel-button" onClick={() => setShowChangePasswordModal(false)}>
                                     Hủy

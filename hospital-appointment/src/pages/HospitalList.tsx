@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/HospitalList.css';
-import { hospitalService, Hospital } from '../services/hospitalService';
+import { hospitalService } from '../services/hospitalService';
+import { Hospital } from '../types/api';
 import { FaSearch } from 'react-icons/fa';
 
 const HospitalList: React.FC = () => {
@@ -16,12 +17,12 @@ const HospitalList: React.FC = () => {
         const fetchHospitals = async () => {
             try {
                 const data = await hospitalService.getAllHospitals();
-                console.log(data);
-                setHospitals(data);
-                setFilteredHospitals(data);
+                const enabledHospitals = data.filter(hospital => hospital.enabled);
+                setHospitals(enabledHospitals);
+                setFilteredHospitals(enabledHospitals);
                 setError(null);
             } catch (err) {
-                setError('Không thể tải danh sách bệnh viện. Vui lòng thử lại sau.');
+                setError('Failed to fetch hospitals');
                 console.error('Error fetching hospitals:', err);
             } finally {
                 setLoading(false);
@@ -32,10 +33,15 @@ const HospitalList: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        const filtered = hospitals.filter(hospital =>
-            hospital.name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        setFilteredHospitals(filtered);
+        if (searchTerm.trim() === '') {
+            setFilteredHospitals(hospitals);
+        } else {
+            const filtered = hospitals.filter(hospital =>
+                hospital.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                hospital.address.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            setFilteredHospitals(filtered);
+        }
     }, [searchTerm, hospitals]);
 
     const handleBookAppointment = (hospitalId: number) => {
@@ -73,17 +79,7 @@ const HospitalList: React.FC = () => {
                         </div>
                         <div className="hospital-info">
                             <h2 className="hospital-name">{hospital.name}</h2>
-                            <div className="hospital-rating">
-                                {[...Array(5)].map((_, index) => (
-                                    <span
-                                        key={index}
-                                        className={`star ${index < Math.floor(hospital.rating) ? 'filled' : ''}`}
-                                    >
-                                        ★
-                                    </span>
-                                ))}
-                                <span className="rating-number">({hospital.rating})</span>
-                            </div>
+
                             <p className="hospital-address">
                                 Địa chỉ:
                                 <i className="fas fa-map-marker-alt"></i> {hospital.address}

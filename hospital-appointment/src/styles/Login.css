@@ -85,6 +85,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 0 !important;
 }
 
 .form-group label {
@@ -140,7 +141,9 @@
 }
 
 .form-actions {
-  margin-top: 20px;
+  margin-top: 0px !important;
+  flex-direction: column;
+  gap: 0px !important;
 }
 
 .login-button {

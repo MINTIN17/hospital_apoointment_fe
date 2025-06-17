@@ -82,21 +82,35 @@ const Login: React.FC = () => {
                         navigate('/home', { replace: true });
                     }
                 } else if (userInfo.role === "DOCTOR") {
-                    console.log('Redirecting to doctor page');
-                    // Bác sĩ không cần kiểm tra enabled
-                    navigate('/doctor', { replace: true });
+                    if (userInfo.enabled === false) {
+                        navigate('/account-disabled', { replace: true });
+                    } else {
+                        navigate('/doctor', { replace: true });
+                    }
                 }
             } else {
                 // Nếu không có user data -> là admin
                 navigate('/admin', { replace: true });
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Login - Error during login:', error);
-            if (axios.isAxiosError(error)) {
-                const errorMessage = error.response?.data?.message || 'Đăng nhập thất bại';
-                setError(errorMessage);
+            if (error.response) {
+                // Xử lý lỗi từ server
+                const errorMessage = error.response.data?.message || 'Đăng nhập thất bại';
+                console.log(errorMessage);
+                if (errorMessage === 'Sai mật khẩu') {
+                    setError('Sai mật khẩu');
+                } else if (errorMessage === 'User not found') {
+                    setError('Tài khoản không tồn tại');
+                } else {
+                    setError(errorMessage);
+                }
+            } else if (error.request) {
+                // Xử lý lỗi không có response từ server
+                setError('Không thể kết nối đến server. Vui lòng thử lại sau.');
             } else {
-                setError('Đã xảy ra lỗi không xác định');
+                // Xử lý các lỗi khác
+                setError('Sai mật khẩu hoặc tài khoản không tồn tại');
             }
         } finally {
             setIsLoading(false);
@@ -109,7 +123,7 @@ const Login: React.FC = () => {
                 <div className="login-left">
                     <div className="logo-container">
                         <img src={logoImage} alt="Logo" className="login-logo" />
-                        <h1 className="logo-text">Lofi Pharma</h1>
+                        <h1 className="logo-text">VietNam Pharma</h1>
                     </div>
                     <div className="greeting">
                         <h2>Chào mừng trở lại!</h2>
@@ -168,6 +182,26 @@ const Login: React.FC = () => {
                             </div>
                         </div>
                         <div className="form-actions">
+                            <div className="forgot-password" style={{ marginBottom: '8px', width: '115px', marginLeft: '300px' }}>
+                                <Link to="/forgot-password" style={{
+                                    color: '#4a90e2',
+                                    textDecoration: 'none',
+                                    fontSize: '14px',
+                                    display: 'block',
+                                    textAlign: 'right',
+                                    transition: 'all 0.3s ease'
+                                }}
+                                    onMouseOver={(e) => {
+                                        e.currentTarget.style.textDecoration = 'underline';
+                                        e.currentTarget.style.fontWeight = 'bold';
+                                    }}
+                                    onMouseOut={(e) => {
+                                        e.currentTarget.style.textDecoration = 'none';
+                                        e.currentTarget.style.fontWeight = 'normal';
+                                    }}>
+                                    Quên mật khẩu?
+                                </Link>
+                            </div>
                             <button type="submit" className="login-button" disabled={isLoading}>
                                 {isLoading ? 'Đang đăng nhập...' : 'Đăng Nhập'}
                             </button>

@@ -106,7 +106,11 @@
 }
 
 .doctor-info {
+    flex-direction: column;
     flex: 1;
+    padding: 0 !important;
+    align-items: start !important;
+    background-color: #fff !important;
 }
 
 .doctor-info h3 {

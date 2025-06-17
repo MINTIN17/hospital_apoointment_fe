@@ -10,6 +10,7 @@ import Doctor from '../pages/Doctor';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import LandingPage from '../pages/LandingPage';
+import ForgotPassword from '../pages/ForgotPassword';
 
 const AppRoutes = () => {
     return (
@@ -18,6 +19,7 @@ const AppRoutes = () => {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
             </Route>
 
             <Route path="/home" element={

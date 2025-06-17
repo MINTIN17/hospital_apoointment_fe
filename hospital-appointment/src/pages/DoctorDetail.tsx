@@ -292,7 +292,7 @@ const DoctorDetail: React.FC = () => {
                         )}
                         <div className="form-group">
                             <label>Lý do khám:</label>
-                            <textarea rows={4} placeholder="Nhập lý do khám của bạn..." value={reason} onChange={(e) => setReason(e.target.value)}></textarea>
+                            <textarea style={{marginBottom: '20px'}} rows={4} placeholder="Nhập lý do khám của bạn..." value={reason} onChange={(e) => setReason(e.target.value)}></textarea>
                         </div>
                         <button
                             className="submit-button"

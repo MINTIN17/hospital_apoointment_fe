@@ -832,16 +832,16 @@
     overflow: hidden;
 }
 
-.specialization-table thead {
-    background-color: #f5f7fa;
-    position: sticky;
-    top: 0;
-    z-index: 1;
+.specialization-table th,
+.specialization-table td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.75rem;
 }
 
 .specialization-table th {
     padding: 8px 14px;
-    text-align: left;
+    text-align: center;
     font-weight: 600;
     color: #1a237e;
     border-bottom: 2px solid #e8eaf6;
@@ -1354,9 +1354,6 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.hospital-info {
-    margin-bottom: 20px;
-}
 
 .hospital-info h3 {
     color: #333;
@@ -1843,3 +1840,300 @@
     opacity: 0.9;
 }
 
+.edit-button {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.edit-button:hover {
+    background-color: #357abd;
+}
+
+.lock-button {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.lock-button:hover {
+    background-color: #c0392b;
+}
+
+.unlock-button {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.unlock-button:hover {
+    background-color: #27ae60;
+}
+
+.specialization-table td {
+    vertical-align: middle;
+}
+
+.specialization-table td button {
+    margin: 0 0.25rem;
+}
+
+.hospital-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.update-button,
+.toggle-button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.update-button {
+    background-color: #4a90e2;
+    color: white;
+}
+
+.update-button:hover {
+    background-color: #357abd;
+}
+
+.toggle-button {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.toggle-button.enabled {
+    background-color: #2ecc71;
+}
+
+.toggle-button:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.toggle-button i {
+    font-size: 1.1rem;
+}
+
+/* Thêm animation cho nút */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.toggle-button:active {
+    animation: pulse 0.3s ease;
+}
+
+.hospital-edit-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.hospital-edit-content {
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.hospital-edit-header {
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hospital-edit-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #333;
+}
+
+.hospital-edit-close {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: #666;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: color 0.2s;
+}
+
+.hospital-edit-close:hover {
+    color: #333;
+}
+
+.hospital-edit-body {
+    padding: 1rem;
+}
+
+.hospital-edit-form-group {
+    margin-bottom: 1rem;
+}
+
+.hospital-edit-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #333;
+    font-weight: 500;
+}
+
+.hospital-edit-form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.hospital-edit-form-group input:focus {
+    border-color: #4a90e2;
+    outline: none;
+}
+
+.hospital-edit-footer {
+    padding: 1rem;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.hospital-edit-cancel {
+    padding: 0.75rem 1.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.hospital-edit-cancel:hover {
+    background: #f5f5f5;
+    color: #333;
+}
+
+.hospital-edit-save {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    background: #4a90e2;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.hospital-edit-save:hover {
+    background: #357abd;
+}
+
+.image-upload-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+.image-preview {
+    width: 200px;
+    height: 200px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px dashed #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+}
+
+.image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.no-image {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+}
+
+.no-image i {
+    font-size: 2rem;
+}
+
+.file-input {
+    display: none;
+}
+
+.upload-button {
+    padding: 0.75rem 1.5rem;
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.upload-button:hover {
+    background-color: #357abd;
+}
+
+.upload-button i {
+    font-size: 1.1rem;
+}
+
+.form-container {
+    width: 100%;
+    flex-direction: row;
+}

@@ -36,5 +36,37 @@ export const doctorService = {
             console.error('Doctor Service - Add failed:', error);
             throw error;
         }
+    },
+
+    banDoctor: async (doctorId: number) => {
+        const response = await axiosInstance.put(`/doctor/ban?doctor_id=${doctorId}`);
+        return response.data;
+    },
+
+    unbanDoctor: async (doctorId: number) => {
+        const response = await axiosInstance.put(`/doctor/unban?doctor_id=${doctorId}`);
+        return response.data;
+    },
+
+    updateDoctor: async (data: {
+        id: number;
+        name: string;
+        email: string;
+        phone: string;
+        gender: string;
+        dateOfBirth: string;
+        avatarUrl: string;
+        address: string;
+        about: string;
+        specialization_id: number;
+        yearsOfExperience: number;
+    }) => {
+        try {
+            const response = await axiosInstance.put('/doctor/updateDoctor', data);
+            return response.data;
+        } catch (error) {
+            console.error('Doctor Service - Update failed:', error);
+            throw error;
+        }
     }
 }; 

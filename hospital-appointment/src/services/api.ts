@@ -44,7 +44,7 @@ axiosInstance.interceptors.response.use(
     (error) => {
         console.error('API Error:', error);
         if (error.response) {
-            if (error.response.status === 401) {
+            if (error.response.status === 401 && window.location.pathname !== '/login') {
                 console.log('API - Unauthorized, clearing token');
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
@@ -157,5 +157,28 @@ export const authService = {
             console.error('Auth Service - Error parsing user data:', error);
             return null;
         }
+    },
+
+    async sendOTP(email: string): Promise<string> {
+        try {
+            const response = await axiosInstance.post(`/auth/send-otp?email=${email}`);
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    verifyOTP: async (email: string, otp: string) => {
+        const response = await axiosInstance.post(`/auth/verify-otp?email=${email}&otp=${otp}`);
+        return response.data;
+    },
+
+    forgotPassword: async (email: string, password: string, role: string) => {
+        const response = await axiosInstance.put('/auth/forgot-password', {
+            email,
+            password,
+            role
+        });
+        return response.data;
     }
 }; 

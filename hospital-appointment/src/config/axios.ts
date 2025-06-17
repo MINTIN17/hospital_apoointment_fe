@@ -29,8 +29,8 @@ axiosInstance.interceptors.response.use(
         return response;
     },
     (error) => {
-        if (error.response?.status === 401) {
-            // Token hết hạn hoặc không hợp lệ
+        if (error.response?.status === 401 && window.location.pathname !== '/login') {
+            // Chỉ chuyển hướng khi không ở trang login
             localStorage.removeItem('token');
             window.location.href = '/login';
         }

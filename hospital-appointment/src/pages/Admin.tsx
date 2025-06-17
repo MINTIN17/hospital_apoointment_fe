@@ -96,6 +96,31 @@ const Admin: React.FC = () => {
         completed: number;
     }[]>([]);
     const [revisitStats, setRevisitStats] = useState<{ revisitRate: string; daysWindow: number }>({ revisitRate: '0%', daysWindow: 0 });
+    const [showDoctorActionModal, setShowDoctorActionModal] = useState(false);
+    const [selectedDoctor, setSelectedDoctor] = useState<doctorResponse | null>(null);
+    const [showEditHospitalModal, setShowEditHospitalModal] = useState(false);
+    const [editingHospital, setEditingHospital] = useState<Hospital | null>(null);
+    const [editHospitalForm, setEditHospitalForm] = useState({
+        name: '',
+        address: '',
+        phone: '',
+        avatarUrl: ''
+    });
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [showEditDoctorModal, setShowEditDoctorModal] = useState(false);
+    const [editingDoctor, setEditingDoctor] = useState<doctorResponse | null>(null);
+    const [editDoctorForm, setEditDoctorForm] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        gender: 'MALE',
+        dateOfBirth: '',
+        address: '',
+        specialization_id: 0,
+        avatarUrl: '',
+        yearsOfExperience: 0
+    });
 
     // Calculate hospital statistics
     const totalHospitals = hospitals.length;
@@ -132,6 +157,7 @@ const Admin: React.FC = () => {
     useEffect(() => {
         if (selectedHospital) {
             setFilteredSpecializations(specializations);
+            console.log(doctors);
             setFilteredDoctors(doctors);
         }
     }, [specializations, doctors, selectedHospital]);
@@ -683,6 +709,464 @@ const Admin: React.FC = () => {
         }
     };
 
+    const handleToggleDoctorStatus = async (doctor: doctorResponse) => {
+        try {
+            let response;
+            if (doctor.enabled) {
+                response = await doctorService.banDoctor(doctor.id);
+            } else {
+                response = await doctorService.unbanDoctor(doctor.id);
+            }
+
+            if (response) {
+                // Cập nhật lại danh sách bác sĩ
+                const updatedDoctors = filteredDoctors.map(d =>
+                    d.id === doctor.id ? { ...d, enabled: !d.enabled } : d
+                );
+                setFilteredDoctors(updatedDoctors);
+                setNotification({
+                    message: doctor.enabled ? 'Đã khóa bác sĩ thành công' : 'Đã mở khóa bác sĩ thành công',
+                    type: 'success'
+                });
+                // Tự động ẩn thông báo sau 3 giây
+                setTimeout(() => {
+                    setNotification(null);
+                }, 3000);
+            }
+        } catch (error) {
+            console.error('Error updating doctor status:', error);
+            setNotification({
+                message: 'Có lỗi xảy ra khi thực hiện thao tác',
+                type: 'error'
+            });
+            // Tự động ẩn thông báo lỗi sau 3 giây
+            setTimeout(() => {
+                setNotification(null);
+            }, 3000);
+        }
+    };
+
+    const handleOpenEditHospital = (hospital: Hospital) => {
+        setEditingHospital(hospital);
+        setEditHospitalForm({
+            name: hospital.name,
+            address: hospital.address,
+            phone: hospital.phone,
+            avatarUrl: hospital.avatarUrl || ''
+        });
+        setShowEditHospitalModal(true);
+    };
+
+    const handleCloseEditHospital = () => {
+        setShowEditHospitalModal(false);
+        setEditingHospital(null);
+        setEditHospitalForm({
+            name: '',
+            address: '',
+            phone: '',
+            avatarUrl: ''
+        });
+        setImagePreview(null);
+        setSelectedFile(null);
+    };
+
+    const handleEditHospitalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setEditHospitalForm(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleSaveHospital = async () => {
+        if (!editingHospital) return;
+
+        try {
+            let avatarUrl = editHospitalForm.avatarUrl;
+
+            // Nếu có file ảnh mới được chọn
+            if (selectedFile) {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                formData.append('upload_preset', 'Hospital');
+
+                const uploadResponse = await axios.post(
+                    `https://api.cloudinary.com/v1_1/di53bdbjf/image/upload`,
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    }
+                );
+
+                avatarUrl = uploadResponse.data.secure_url;
+            }
+
+            const hospitalData = {
+                id: editingHospital.id.toString(),
+                ...editHospitalForm,
+                avatarUrl
+            };
+
+            const response = await hospitalService.updateHospital(hospitalData);
+
+            if (response === "update success") {
+                setNotification({
+                    type: 'success',
+                    message: 'Cập nhật thông tin bệnh viện thành công'
+                });
+
+                // Cập nhật lại danh sách bệnh viện
+                const updatedHospitals = hospitals.map(h =>
+                    h.id === editingHospital.id ? { ...h, ...hospitalData } : h
+                );
+                setHospitals(updatedHospitals);
+
+                // Đóng modal trước
+                handleCloseEditHospital();
+
+                // Reset form sau
+                setEditHospitalForm({
+                    name: '',
+                    address: '',
+                    phone: '',
+                    avatarUrl: ''
+                });
+                setImagePreview(null);
+                setSelectedFile(null);
+            } else {
+                setNotification({
+                    type: 'error',
+                    message: 'Cập nhật thông tin bệnh viện thất bại'
+                });
+            }
+
+            // Ẩn thông báo sau 3 giây
+            setTimeout(() => {
+                setNotification(null);
+            }, 3000);
+        } catch (error) {
+            console.error('Error updating hospital:', error);
+            setNotification({
+                type: 'error',
+                message: 'Cập nhật thông tin bệnh viện thất bại'
+            });
+            // Ẩn thông báo sau 3 giây
+            setTimeout(() => {
+                setNotification(null);
+            }, 3000);
+        }
+    };
+
+    const handleToggleHospitalStatus = async (hospital: Hospital) => {
+        try {
+            let response;
+            if (hospital.enabled) {
+                response = await hospitalService.banHospital(hospital.id);
+            } else {
+                response = await hospitalService.unbanHospital(hospital.id);
+            }
+
+            if (response) {
+                // Cập nhật lại danh sách bệnh viện
+                const updatedHospitals = hospitals.map(h =>
+                    h.id === hospital.id ? { ...h, enabled: !h.enabled } : h
+                );
+                setHospitals(updatedHospitals);
+
+                setNotification({
+                    type: 'success',
+                    message: hospital.enabled ? 'Đã khóa bệnh viện thành công' : 'Đã mở khóa bệnh viện thành công'
+                });
+
+                // Tự động ẩn thông báo sau 3 giây
+                setTimeout(() => {
+                    setNotification(null);
+                }, 3000);
+            }
+        } catch (error) {
+            console.error('Error updating hospital status:', error);
+            setNotification({
+                type: 'error',
+                message: 'Có lỗi xảy ra khi thực hiện thao tác'
+            });
+            // Tự động ẩn thông báo lỗi sau 3 giây
+            setTimeout(() => {
+                setNotification(null);
+            }, 3000);
+        }
+    };
+
+    const handleOpenEditDoctor = (doctor: doctorResponse) => {
+        console.log(specializations);
+        console.log(doctor.specialization_name);
+        const matched = specializations.find(
+            spec =>
+                spec.name?.trim().toLowerCase() ===
+                doctor.specialization_name?.trim().toLowerCase()
+        );
+        console.log("Matched specialization:", matched?.id);
+        setEditingDoctor(doctor);
+        console.log(doctor.id);
+        setEditDoctorForm({
+            name: doctor.name,
+            email: doctor.email,
+            phone: doctor.phone,
+            gender: doctor.gender,
+            dateOfBirth: doctor.dateOfBirth,
+            address: doctor.address,
+            specialization_id: matched?.id || 0,
+            avatarUrl: doctor.avatarUrl,
+            yearsOfExperience: doctor.yearsOfExperience || 0
+        });
+        setShowEditDoctorModal(true);
+    };
+
+    const handleCloseEditDoctor = () => {
+        setShowEditDoctorModal(false);
+        setEditingDoctor(null);
+        setEditDoctorForm({
+            name: '',
+            email: '',
+            phone: '',
+            gender: 'MALE',
+            dateOfBirth: '',
+            address: '',
+            specialization_id: 0,
+            avatarUrl: '',
+            yearsOfExperience: 0
+        });
+    };
+
+    const handleEditDoctorChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setEditDoctorForm(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleEditDoctorImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setEditDoctorForm(prev => ({
+                    ...prev,
+                    avatarUrl: reader.result as string
+                }));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleSaveDoctor = async () => {
+        if (!editingDoctor) return;
+
+        try {
+            let avatarUrl = editDoctorForm.avatarUrl;
+
+            // Nếu có file ảnh mới được chọn
+            if (selectedFile) {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                formData.append('upload_preset', 'Doctor');
+
+                const uploadResponse = await axios.post(
+                    `https://api.cloudinary.com/v1_1/di53bdbjf/image/upload`,
+                    formData,
+                    {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    }
+                );
+
+                avatarUrl = uploadResponse.data.secure_url;
+            }
+
+            const doctorData = {
+                id: parseInt(editingDoctor.id),
+                name: editDoctorForm.name,
+                email: editDoctorForm.email,
+                phone: editDoctorForm.phone,
+                gender: editDoctorForm.gender,
+                dateOfBirth: editDoctorForm.dateOfBirth,
+                avatarUrl,
+                address: editDoctorForm.address,
+                about: editingDoctor.about || '',
+                specialization_id: editDoctorForm.specialization_id,
+                yearsOfExperience: editDoctorForm.yearsOfExperience
+            };
+
+            const response = await doctorService.updateDoctor(doctorData);
+            if (response) {
+                showNotification('Cập nhật thông tin bác sĩ thành công', 'success');
+                handleCloseEditDoctor();
+                // Refresh danh sách bác sĩ
+                const updatedDoctors = await doctorService.getDoctorsByHospital(selectedHospital?.id || 0);
+                setDoctors(updatedDoctors);
+            }
+        } catch (error) {
+            showNotification('Cập nhật thông tin bác sĩ thất bại', 'error');
+            console.error('Error updating doctor:', error);
+        }
+    };
+
+    const renderEditDoctorModal = () => {
+        if (!showEditDoctorModal) return null;
+
+        return (
+            <div className="modal-overlay">
+                <div className="modal-content doctor-modal">
+                    <div className="modal-header">
+                        <h3>Chỉnh Sửa Thông Tin Bác Sĩ</h3>
+                        <button className="close-button" onClick={handleCloseEditDoctor}>×</button>
+                    </div>
+                    <form onSubmit={(e) => { e.preventDefault(); handleSaveDoctor(); }}>
+                        {/* <div className="form-container"> */}
+                        <div className="form-left">
+                            <div className="image-upload-section">
+                                <div className="image-preview">
+                                    {editDoctorForm.avatarUrl ? (
+                                        <img src={editDoctorForm.avatarUrl} alt="Preview" />
+                                    ) : (
+                                        <div style={{
+                                            width: '100%',
+                                            height: '100%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            background: '#f0f4ff',
+                                            color: '#1a237e'
+                                        }}>
+                                            Chưa có ảnh
+                                        </div>
+                                    )}
+                                </div>
+                                <label htmlFor="doctorImage" className="upload-button">
+                                    Chọn ảnh
+                                </label>
+                                <input
+                                    type="file"
+                                    id="doctorImage"
+                                    name="doctorImage"
+                                    accept="image/*"
+                                    onChange={handleEditDoctorImageChange}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Họ và tên:</label>
+                                <input
+                                    type="text"
+                                    name="name"
+                                    value={editDoctorForm.name}
+                                    onChange={handleEditDoctorChange}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Email:</label>
+                                <input
+                                    type="email"
+                                    name="email"
+                                    value={editDoctorForm.email}
+                                    onChange={handleEditDoctorChange}
+                                />
+                            </div>
+                            <div className="modal-footer" style={{ marginTop: 32 }}>
+                                <button type="button" className="cancel-button" onClick={handleCloseEditDoctor}>
+                                    Hủy
+                                </button>
+                                <button type="submit" className="save-button">
+                                    Lưu thay đổi
+                                </button>
+                            </div>
+                        </div>
+                        <div className="form-right">
+
+                            <div className="form-group">
+                                <label>Số điện thoại:</label>
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    value={editDoctorForm.phone}
+                                    onChange={handleEditDoctorChange}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Ngày sinh:</label>
+                                <input
+                                    type="date"
+                                    name="dateOfBirth"
+                                    value={editDoctorForm.dateOfBirth}
+                                    onChange={handleEditDoctorChange}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Địa chỉ:</label>
+                                <input
+                                    type="text"
+                                    name="address"
+                                    value={editDoctorForm.address}
+                                    onChange={handleEditDoctorChange}
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Năm kinh nghiệm:</label>
+                                <input
+                                    type="number"
+                                    name="yearsOfExperience"
+                                    value={editDoctorForm.yearsOfExperience}
+                                    onChange={handleEditDoctorChange}
+                                    min="0"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Chuyên khoa:</label>
+                                <select
+                                    name="specialization_id"
+                                    value={editDoctorForm.specialization_id}
+                                    onChange={handleEditDoctorChange}
+                                >
+                                    {specializations.map(spec => (
+                                        <option key={spec.id} value={spec.id}>
+                                            {spec.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Giới tính:</label>
+                                <select
+                                    name="gender"
+                                    value={editDoctorForm.gender}
+                                    onChange={handleEditDoctorChange}
+                                >
+                                    <option value="MALE">Nam</option>
+                                    <option value="FEMALE">Nữ</option>
+                                </select>
+                            </div>
+                        </div>
+                        {/* </div> */}
+                    </form>
+                </div>
+            </div>
+        );
+    };
+
     const renderContent = () => {
         switch (activeTab) {
             case 'patients':
@@ -781,6 +1265,8 @@ const Admin: React.FC = () => {
                     </div>
                 );
             case 'hospitals':
+                const activeHospitals = hospitals.filter(hospital => hospital.enabled).length;
+                const disabledHospitals = hospitals.filter(hospital => !hospital.enabled).length;
                 return (
                     <div className="admin-content">
                         <div className="content-header">
@@ -790,8 +1276,15 @@ const Admin: React.FC = () => {
                                     <div className="stat-card active">
                                         <div className="stat-icon">🏥</div>
                                         <div className="stat-info">
-                                            <div className="stat-label">Tổng số</div>
-                                            <div className="stat-value">{totalHospitals}</div>
+                                            <div className="stat-label">Hoạt động</div>
+                                            <div className="stat-value">{activeHospitals}</div>
+                                        </div>
+                                    </div>
+                                    <div className="stat-card disabled">
+                                        <div className="stat-icon">🔒</div>
+                                        <div className="stat-info">
+                                            <div className="stat-label">Đã khóa</div>
+                                            <div className="stat-value">{disabledHospitals}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -847,6 +1340,25 @@ const Admin: React.FC = () => {
                                                             {hospital.specializationCount} Chuyên khoa
                                                         </p>
                                                     </div>
+                                                </div>
+                                                <div className="hospital-actions">
+                                                    <button
+                                                        className="update-button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleOpenEditHospital(hospital);
+                                                        }}
+                                                    >
+                                                        <i className="fas fa-save"></i>
+                                                        Cập nhật thông tin
+                                                    </button>
+                                                    <button
+                                                        className={`toggle-button ${hospital.enabled ? 'enabled' : ''}`}
+                                                        onClick={() => handleToggleHospitalStatus(hospital)}
+                                                    >
+                                                        <i className={`fas ${hospital.enabled ? 'fa-lock-open' : 'fa-lock'}`}></i>
+                                                        {hospital.enabled ? 'Khóa bệnh viện' : 'Mở khóa bệnh viện'}
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -1074,6 +1586,90 @@ const Admin: React.FC = () => {
             default:
                 return <div className="admin-content">Quản lý bệnh nhân</div>;
         }
+    };
+
+    const renderEditHospitalModal = () => {
+        if (!showEditHospitalModal || !editingHospital) return null;
+
+        return (
+            <div className="hospital-edit-modal">
+                <div className="hospital-edit-content">
+                    <div className="hospital-edit-header">
+                        <h2>Chỉnh sửa thông tin bệnh viện</h2>
+                        <button className="hospital-edit-close" onClick={handleCloseEditHospital}>
+                            <i className="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div className="hospital-edit-body">
+                        <div className="hospital-edit-form-group">
+                            <label>Tên bệnh viện</label>
+                            <input
+                                type="text"
+                                name="name"
+                                value={editHospitalForm.name}
+                                onChange={handleEditHospitalChange}
+                                placeholder="Nhập tên bệnh viện"
+                            />
+                        </div>
+                        <div className="hospital-edit-form-group">
+                            <label>Địa chỉ</label>
+                            <input
+                                type="text"
+                                name="address"
+                                value={editHospitalForm.address}
+                                onChange={handleEditHospitalChange}
+                                placeholder="Nhập địa chỉ"
+                            />
+                        </div>
+                        <div className="hospital-edit-form-group">
+                            <label>Số điện thoại</label>
+                            <input
+                                type="text"
+                                name="phone"
+                                value={editHospitalForm.phone}
+                                onChange={handleEditHospitalChange}
+                                placeholder="Nhập số điện thoại"
+                            />
+                        </div>
+                        <div className="hospital-edit-form-group">
+                            <label>Ảnh đại diện</label>
+                            <div className="image-upload-container">
+                                <div className="image-preview">
+                                    {imagePreview ? (
+                                        <img src={imagePreview} alt="Preview" />
+                                    ) : editingHospital.avatarUrl ? (
+                                        <img src={editingHospital.avatarUrl} alt="Current" />
+                                    ) : (
+                                        <div className="no-image">
+                                            <i className="fas fa-image"></i>
+                                            <span>Chưa có ảnh</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFileChange}
+                                    className="file-input"
+                                />
+                                <button className="upload-button" onClick={() => document.querySelector('.file-input')?.click()}>
+                                    <i className="fas fa-upload"></i>
+                                    Chọn ảnh
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="hospital-edit-footer">
+                        <button className="hospital-edit-cancel" onClick={handleCloseEditHospital}>
+                            Hủy
+                        </button>
+                        <button className="hospital-edit-save" onClick={handleSaveHospital}>
+                            Lưu thay đổi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -1314,7 +1910,7 @@ const Admin: React.FC = () => {
                                 </div>
                                 <div className="doctors-list">
                                     {filteredDoctors && filteredDoctors.length > 0 ? (
-                                        <table className="specialization-table">
+                                        <table className="specialization-table" >
                                             <thead>
                                                 <tr>
                                                     <th>STT</th>
@@ -1325,7 +1921,7 @@ const Admin: React.FC = () => {
                                                     <th>Năm kinh nghiệm</th>
                                                     <th>Email</th>
                                                     <th>Số điện thoại</th>
-                                                    <th>Địa chỉ</th>
+                                                    <th>Thao tác</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -1339,7 +1935,23 @@ const Admin: React.FC = () => {
                                                         <td>{doctor.yearsOfExperience}</td>
                                                         <td>{doctor.email}</td>
                                                         <td>{doctor.phone}</td>
-                                                        <td>{doctor.address}</td>
+                                                        <td>
+                                                            <button
+                                                                className="edit-button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleOpenEditDoctor(doctor);
+                                                                }}
+                                                            >
+                                                                Sửa
+                                                            </button>
+                                                            <button
+                                                                className={doctor.enabled ? 'lock-button' : 'unlock-button'}
+                                                                onClick={() => handleToggleDoctorStatus(doctor)}
+                                                            >
+                                                                {doctor.enabled ? 'Khóa' : 'Mở khóa'}
+                                                            </button>
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -1559,6 +2171,12 @@ const Admin: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {showDoctorActionModal && renderDoctorActionModal()}
+
+            {renderEditHospitalModal()}
+
+            {renderEditDoctorModal()}
 
             {notification && (
                 <div className={`notification ${notification.type}`}>

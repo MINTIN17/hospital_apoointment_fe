@@ -106,25 +106,30 @@ const DoctorList: React.FC = () => {
                 </select>
             </div>
             <div className="doctor-grid">
-                {filteredDoctors.map((doctor) => (
-                    <div key={doctor.id} className="doctor-card">
-                        <div className="doctor-avatar">
-                            {/* Có thể thêm ảnh đại diện bác sĩ ở đây */}
-                            <span>{doctor.name.charAt(0)}</span>
+                {filteredDoctors
+                    .filter(doctor => doctor.enabled)
+                    .map((doctor) => (
+                        <div key={doctor.id} className="doctor-card">
+                            <div className="doctor-avatar">
+                                {doctor.avatarUrl ? (
+                                    <img src={doctor.avatarUrl} alt={doctor.name} />
+                                ) : (
+                                    doctor.name.charAt(0)
+                                )}
+                            </div>
+                            <div className="doctor-info">
+                                <h3>{doctor.name}</h3>
+                                <p className="specialization">Khoa: {doctor.specialization_name}</p>
+                                <p className="experience">Kinh nghiệm: {doctor.yearsOfExperience} năm</p>
+                                <button
+                                    className="book-button"
+                                    onClick={() => handleBookAppointment(doctor.id.toString())}
+                                >
+                                    Đặt lịch
+                                </button>
+                            </div>
                         </div>
-                        <div className="doctor-info">
-                            <h3>{doctor.name}</h3>
-                            <p className="specialization">Khoa: {doctor.specialization_name}</p>
-                            <p className="experience">Kinh nghiệm: {doctor.yearsOfExperience} năm</p>
-                            <button
-                                className="book-button"
-                                onClick={() => handleBookAppointment(doctor.id.toString())}
-                            >
-                                Đặt lịch
-                            </button>
-                        </div>
-                    </div>
-                ))}
+                    ))}
             </div>
         </div>
     );
